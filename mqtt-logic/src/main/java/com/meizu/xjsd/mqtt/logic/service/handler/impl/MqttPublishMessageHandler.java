@@ -5,10 +5,7 @@ import com.meizu.xjsd.mqtt.logic.entity.IMqttPublishMessage;
 import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.IRetainMessageStoreService;
-import com.meizu.xjsd.mqtt.logic.service.store.ISessionStoreService;
-import com.meizu.xjsd.mqtt.logic.service.store.RetainMessageStoreDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.SessionStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +18,8 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
 
     private final IRetainMessageStoreService retainMessageStoreService;
 
+    private final IDupPublishMessageStoreService dupPublishMessageStoreService;
+
 
     @Override
     public void handle(IMqttPublishMessage event, ITransport transport) {
@@ -28,7 +27,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getExecutorService().execute(()->{
+        MqttLogic.getExecutorService().execute(() -> {
             try {
                 // Call the inner handling logic
                 handleInner(event, transport);
@@ -53,6 +52,17 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                 .mqttQoS(event.qosLevel().value()).messageBytes(messageBytes)
                 .dup(false).retain(false).clientId(clientId).build();
         internalCommunication.internalPublish(internalMessageDTO);
+
+        if (event.qosLevel().value() > 0) {
+            dupPublishMessageStoreService.put(clientId,
+                    DupPublishMessageStoreDTO.builder()
+                            .messageId(event.messageId())
+                            .topic(event.topicName())
+                            .mqttQoS(event.qosLevel().value())
+                            .messageBytes(messageBytes)
+                            .clientId(clientId)
+                            .build());
+        }
 
         if (event.isRetain()) {
             retainMessageStoreService.put(event.topicName(), RetainMessageStoreDTO.builder()

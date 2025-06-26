@@ -25,6 +25,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.cache.expiry.AccessedExpiryPolicy;
+import javax.cache.expiry.Duration;
 import java.util.Arrays;
 
 /**
@@ -101,28 +103,36 @@ public class IgniteAutoConfig {
 
     @Bean
     public IgniteCache retainMessageCache() throws Exception {
-        CacheConfiguration cacheConfiguration = new CacheConfiguration().setDataRegionName("persistence-data-region")
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName("persistence-data-region")
                 .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("retainMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
     @Bean
     public IgniteCache subscribeCache() throws Exception {
-        CacheConfiguration cacheConfiguration = new CacheConfiguration().setDataRegionName("persistence-data-region")
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName("persistence-data-region")
                 .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
     @Bean
     public IgniteCache sessionCache() throws Exception {
-        CacheConfiguration cacheConfiguration = new CacheConfiguration().setDataRegionName("persistence-data-region")
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName("persistence-data-region")
                 .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("sessionCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
     @Bean
     public IgniteCache dupPublishMessageCache() throws Exception {
-        CacheConfiguration cacheConfiguration = new CacheConfiguration().setDataRegionName("persistence-data-region")
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName("persistence-data-region")
                 .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("dupPublishMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }

@@ -28,7 +28,6 @@ public class DupPublishMessageStoreDTO implements Serializable {
 
 	private byte[] messageBytes;
 
-	private int times = 1; // 当前重发次数
 
 
 
