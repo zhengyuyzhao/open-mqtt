@@ -29,9 +29,9 @@ public class IgniteDupPublishMessageStoreService implements IDupPublishMessageSt
             List<DupPublishMessageStoreDTO> list = store.get(clientId);
             if (list == null) {
                 list = new java.util.ArrayList<>();
-                list.add(dupPublishMessageStoreDTO);
-                store.put(clientId, list);
             }
+            list.add(dupPublishMessageStoreDTO);
+            store.put(clientId, list);
 
             tx.commit();
         }
