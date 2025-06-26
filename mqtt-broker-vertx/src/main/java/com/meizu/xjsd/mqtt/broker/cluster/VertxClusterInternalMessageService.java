@@ -64,7 +64,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
                     ITransport transport = transportLocalStoreService.getTransport(subscribeStoreDTO.getClientId());
                     if (transport == null) {
-                        log.info("Transport not found for clientId: {}", internalMessageDTO.getClientId());
+                        log.info("Transport not found for clientId: {}", subscribeStoreDTO.getClientId());
                         return;
                     }
                     log.info("Publishing internal message to clientId: {}, topic: {}", subscribeStoreDTO.getClientId(), internalMessageDTO.getTopic());

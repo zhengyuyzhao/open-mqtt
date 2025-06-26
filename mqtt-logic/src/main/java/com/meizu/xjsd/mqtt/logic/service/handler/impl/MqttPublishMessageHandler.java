@@ -57,7 +57,9 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
         byte[] messageBytes = event.payload();
         InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder().topic(event.topicName())
                 .mqttQoS(event.qosLevel().value()).messageBytes(messageBytes)
-                .dup(false).retain(false).clientId(clientId).build();
+                .dup(false).retain(false)
+                .clientId(clientId)
+                .build();
         internalCommunication.internalPublish(internalMessageDTO);
 
         if (event.qosLevel().value() > 0) {
