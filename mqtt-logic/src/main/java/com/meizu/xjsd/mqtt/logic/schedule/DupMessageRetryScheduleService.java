@@ -62,11 +62,6 @@ public class DupMessageRetryScheduleService {
         List<DupPublishMessageStoreDTO> messages = dupPublishMessageStoreService.get(transport.clientIdentifier());
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
-                if (message.getTimes() > mqttLogicConfig.getDupMessageRetryMaxTimes()) {
-                    log.warn("Dup publish message retry times exceeded for clientId: {}, messageId: {}",
-                            transport.clientIdentifier(), message.getMessageId());
-                    return;
-                }
                 transport.publish(message.getTopic(), message.getMessageBytes(),
                         MqttQoS.valueOf(message.getMqttQoS()), true, false, message.getMessageId());
             });
