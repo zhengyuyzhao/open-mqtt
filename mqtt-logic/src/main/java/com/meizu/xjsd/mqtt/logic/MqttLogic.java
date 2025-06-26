@@ -117,7 +117,8 @@ public class MqttLogic {
             mqttPublishMessageHandler = new MqttPublishMessageHandler(
                     sessionStoreService,
                     internalMessageService,
-                    retainMessageStoreService
+                    retainMessageStoreService,
+                    dupPublishMessageStoreService
             );
         }
         return mqttPublishMessageHandler;
