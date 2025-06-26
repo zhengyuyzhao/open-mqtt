@@ -9,9 +9,11 @@ import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMessage> {
 
@@ -89,6 +91,8 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                                     .messageBytes(dto.payload())
                                     .clientId(subscribeStoreDTO.getClientId())
                                     .build());
+                    log.info("Stored duplicate message for clientId: {}, topic: {}, messageId: {}",
+                            subscribeStoreDTO.getClientId(), dto.topicName(), dto.messageId());
                 }
 
 

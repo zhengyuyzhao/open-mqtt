@@ -27,6 +27,10 @@ public class IgniteProperties {
 	 */
 	private String persistenceStorePath = "/data/ignite/store";
 
+	private String snapshotPath = "/data/ignite/store/snapshot";
+
+	private String workPath = "/data/ignite/workPath";
+
 	/**
 	 * 非持久化缓存内存初始化大小(MB), 默认值: 64
 	 */
@@ -44,6 +48,22 @@ public class IgniteProperties {
 	public IgniteProperties setPersistenceInitialSize(int persistenceInitialSize) {
 		this.persistenceInitialSize = persistenceInitialSize;
 		return this;
+	}
+
+	public String getSnapshotPath() {
+		return snapshotPath;
+	}
+
+	public String getWorkPath() {
+		return workPath;
+	}
+
+	public void setWorkPath(String workPath) {
+		this.workPath = workPath;
+	}
+
+	public void setSnapshotPath(String snapshotPath) {
+		this.snapshotPath = snapshotPath;
 	}
 
 	public int getPersistenceMaxSize() {

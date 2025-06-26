@@ -62,6 +62,8 @@ public class IgniteAutoConfig {
         // Ignite日志
         Logger logger = LoggerFactory.getLogger("org.apache.ignite");
         igniteConfiguration.setGridLogger(new Slf4jLogger(logger));
+        igniteConfiguration.setSnapshotPath(igniteProperties().getSnapshotPath());
+        igniteConfiguration.setWorkDirectory(igniteProperties().getWorkPath());
         // 非持久化数据区域
         DataRegionConfiguration notPersistence = new DataRegionConfiguration().setPersistenceEnabled(false)
                 .setInitialSize(igniteProperties().getNotPersistenceInitialSize() * 1024 * 1024)
@@ -73,6 +75,7 @@ public class IgniteAutoConfig {
         DataStorageConfiguration dataStorageConfiguration = new DataStorageConfiguration()
                 .setDefaultDataRegionConfiguration(notPersistence)
                 .setDataRegionConfigurations(persistence)
+                .setCdcWalPath(StrUtil.isNotBlank(igniteProperties().getPersistenceStorePath()) ? igniteProperties().getPersistenceStorePath() : null)
                 .setWalArchivePath(StrUtil.isNotBlank(igniteProperties().getPersistenceStorePath()) ? igniteProperties().getPersistenceStorePath() : null)
                 .setWalPath(StrUtil.isNotBlank(igniteProperties().getPersistenceStorePath()) ? igniteProperties().getPersistenceStorePath() : null)
                 .setStoragePath(StrUtil.isNotBlank(igniteProperties().getPersistenceStorePath()) ? igniteProperties().getPersistenceStorePath() : null);

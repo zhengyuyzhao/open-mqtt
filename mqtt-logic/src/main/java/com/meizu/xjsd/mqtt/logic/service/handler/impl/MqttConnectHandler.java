@@ -14,9 +14,11 @@ import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 public class MqttConnectHandler implements ConnectHandler<ITransport> {
     private final IAuthService authService;
@@ -65,6 +67,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
     private void sendDupMessage(ITransport transport) {
         // 发送重复发布的消息
         List<DupPublishMessageStoreDTO> messages = dupPublishMessageStoreService.get(transport.clientIdentifier());
+        log.info("Sending duplicate messages for clientId: {}, messages: {}", transport.clientIdentifier(), messages);
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
                 transport.publish(message.getTopic(), message.getMessageBytes(),
