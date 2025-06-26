@@ -118,7 +118,8 @@ public class MqttLogic {
                     sessionStoreService,
                     internalMessageService,
                     retainMessageStoreService,
-                    dupPublishMessageStoreService
+                    dupPublishMessageStoreService,
+                    subscribeStoreService
             );
         }
         return mqttPublishMessageHandler;

@@ -11,81 +11,34 @@ import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.impl.DefaultTransportLocalStoreService;
-import com.meizu.xjsd.mqtt.store.memory.*;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.ignite.IgniteClusterManager;
 import jakarta.annotation.Resource;
 import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
-import java.util.Map;
 
 @Configuration
 public class VertxMqttConfig {
 
     @Resource
     Ignite ignite;
-    @Resource(name = "messageIdCache")
-    IgniteCache<String, Long> messageIdCache;
 
-    @Resource(name = "dupPublishMessageCache")
-    IgniteCache<String, List<DupPublishMessageStoreDTO>>  dupPublishMessageCache;
+    @Resource
+    ISubscribeStoreService subscribeStoreService;
 
+    @Resource
+    IRetainMessageStoreService retainMessageStoreService;
 
-    @Resource(name = "retainMessageCache")
-    IgniteCache<String, RetainMessageStoreDTO> retainMessageCache;
+    @Resource
+    IDupPublishMessageStoreService dupPublishMessageStoreService;
 
-    @Resource(name = "sessionCache")
-    IgniteCache<String, SessionStoreDTO> sessionCache;
+    @Resource
+    ISessionStoreService sessionStoreService;
 
-    @Resource(name = "subscribeCache")
-    IgniteCache<String, Map<String, SubscribeStoreDTO>> subscribeCache;
+    @Resource
+    IMessageIdService messageIdService;
 
-    @Bean
-    public IDupPublishMessageStoreService dupPublishMessageStoreService() {
-        // Assuming you have a concrete implementation of IDupPublishMessageStoreService
-        return new IgniteDupPublishMessageStoreService(
-                ignite,
-                dupPublishMessageCache
-        );
-    }
-
-    @Bean
-    public IMessageIdService messageIdService() {
-        // Assuming you have a concrete implementation of IMessageIdService
-        return new IgniteMessageIdService(
-                ignite,
-                messageIdCache
-        );
-    }
-
-    @Bean
-    public IRetainMessageStoreService retainMessageStoreService() {
-        // Assuming you have a concrete implementation of IRetainMessageStoreService
-        return new IgniteRetainMessageStoreService(
-                retainMessageCache
-        );
-    }
-
-    @Bean
-    public ISessionStoreService sessionStoreService() {
-        // Assuming you have a concrete implementation of ISessionStoreService
-        return new IgniteSessionStoreService(
-                sessionCache
-        );
-    }
-
-    @Bean
-    public ISubscribeStoreService subscribeStoreService() {
-        // Assuming you have a concrete implementation of ISubscribeStoreService
-        return new IgniteSubscribeStoreService(
-                ignite,
-                subscribeCache
-        );
-    }
 
     @Bean
     public ITransportLocalStoreService transportLocalStoreService() {
@@ -96,7 +49,7 @@ public class VertxMqttConfig {
     @Bean
     public IInternalMessageService internalMessageService() {
         // Assuming you have a concrete implementation of IInternalMessageService
-        return new VertxClusterInternalMessageService(transportLocalStoreService(), subscribeStoreService(), vertxCluster()); // Replace with actual implementation if needed
+        return new VertxClusterInternalMessageService(transportLocalStoreService(), subscribeStoreService, vertxCluster()); // Replace with actual implementation if needed
     }
 
     @Bean
@@ -104,11 +57,11 @@ public class VertxMqttConfig {
         return MqttLogic.builder()
                 .mqttLogicConfig(new MqttLogicConfig())
                 .authService(new DefaultMqttAuth())
-                .dupPublishMessageStoreService(dupPublishMessageStoreService())
-                .messageIdService(messageIdService())
-                .retainMessageStoreService(retainMessageStoreService())
-                .subscribeStoreService(subscribeStoreService())
-                .sessionStoreService(sessionStoreService())
+                .dupPublishMessageStoreService(dupPublishMessageStoreService)
+                .messageIdService(messageIdService)
+                .retainMessageStoreService(retainMessageStoreService)
+                .subscribeStoreService(subscribeStoreService)
+                .sessionStoreService(sessionStoreService)
                 .transportLocalStoreService(transportLocalStoreService())
                 .internalMessageService(internalMessageService()) // Replace with actual implementation if needed
                 .build();

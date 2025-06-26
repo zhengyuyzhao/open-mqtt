@@ -1,5 +1,6 @@
 package com.meizu.xjsd.mqtt.logic.service.handler.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import com.meizu.xjsd.mqtt.logic.entity.IMqttPublishMessage;
 import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
@@ -8,6 +9,8 @@ import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMessage> {
@@ -19,6 +22,8 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
     private final IRetainMessageStoreService retainMessageStoreService;
 
     private final IDupPublishMessageStoreService dupPublishMessageStoreService;
+
+    private final ISubscribeStoreService subscribeStoreService;
 
 
     @Override
@@ -54,14 +59,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
         internalCommunication.internalPublish(internalMessageDTO);
 
         if (event.qosLevel().value() > 0) {
-            dupPublishMessageStoreService.put(clientId,
-                    DupPublishMessageStoreDTO.builder()
-                            .messageId(event.messageId())
-                            .topic(event.topicName())
-                            .mqttQoS(event.qosLevel().value())
-                            .messageBytes(messageBytes)
-                            .clientId(clientId)
-                            .build());
+            storeDupMessage(event);
         }
 
         if (event.isRetain()) {
@@ -71,6 +69,33 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                     .mqttQoS(event.qosLevel().value())
                     .build());
         }
+    }
+
+    private void storeDupMessage(IMqttPublishMessage dto ) {
+        MqttLogic.getExecutorService().execute(() -> {
+            try {
+                List<SubscribeStoreDTO> list = subscribeStoreService.search(dto.topicName());
+                if (CollectionUtil.isEmpty(list)) {
+                    // No subscribers for this topic, no need to store duplicate message
+                    return;
+                }
+                // Store the duplicate message for the client
+                for (SubscribeStoreDTO subscribeStoreDTO : list) {
+                    dupPublishMessageStoreService.put(subscribeStoreDTO.getClientId(),
+                            DupPublishMessageStoreDTO.builder()
+                                    .messageId(dto.messageId())
+                                    .topic(dto.topicName())
+                                    .mqttQoS(dto.qosLevel().value())
+                                    .messageBytes(dto.payload())
+                                    .clientId(subscribeStoreDTO.getClientId())
+                                    .build());
+                }
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
 
