@@ -1,0 +1,7 @@
+spring:
+  mqtt:
+    broker:
+      static-ip-addresses: 172.20.21.99:47500..47509
+      id: mqtt-broker-1
+      cache:
+        persistenceStorePath: /data/ignite/store

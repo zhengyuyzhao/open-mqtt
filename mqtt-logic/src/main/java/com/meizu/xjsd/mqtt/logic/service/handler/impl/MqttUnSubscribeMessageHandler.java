@@ -1,0 +1,40 @@
+package com.meizu.xjsd.mqtt.logic.service.handler.impl;
+
+import com.meizu.xjsd.mqtt.logic.MqttLogic;
+import com.meizu.xjsd.mqtt.logic.entity.IMqttUnsubscribeMessage;
+import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
+import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
+import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
+import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
+@RequiredArgsConstructor
+@Slf4j
+public class MqttUnSubscribeMessageHandler implements MessageHandler<IMqttUnsubscribeMessage> {
+
+    private final ISubscribeStoreService subscribeStoreService;
+    private final IInternalMessageService internalMessageService;
+
+    @Override
+    public void handle(IMqttUnsubscribeMessage event, ITransport transport) {
+        // Handle the MQTT subscribe message here
+        // This could involve processing the subscription, updating state, etc.
+        MqttLogic.getExecutorService().execute(()->{
+            handleInner(event, transport);
+        });
+    }
+
+    private void handleInner(IMqttUnsubscribeMessage event, ITransport transport) {
+        List<String> topicFilters = event.topics();
+        String clientId = transport.clientIdentifier();
+        topicFilters.forEach(topicFilter -> {
+            subscribeStoreService.remove(topicFilter, clientId);
+            log.debug("UNSUBSCRIBE - clientId: {}, topicFilter: {}", clientId, topicFilter);
+        });
+    }
+
+
+}
