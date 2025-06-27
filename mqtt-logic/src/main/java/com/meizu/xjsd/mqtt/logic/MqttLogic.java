@@ -56,6 +56,11 @@ public class MqttLogic {
     private MqttPublishAckHandler mqttPublishAckHandler;
     private MqttPublishCompHandler mqttPublishCompHandler;
     private MqttPublishMessageHandler mqttPublishMessageHandler;
+
+    private MqttPubrecHandler mqttPubrecHandler;
+
+    private MqttPubrelHandler mqttPubrelHandler;
+
     private MqttSubscribeMessageHandler mqttSubscribeHandler;
     private MqttUnSubscribeMessageHandler mqttUnSubscribeHandler;
 
@@ -75,6 +80,7 @@ public class MqttLogic {
     public MqttUnSubscribeMessageHandler unSubscribe() {
         if (mqttUnSubscribeHandler == null) {
             mqttUnSubscribeHandler = new MqttUnSubscribeMessageHandler(
+                    mqttLogicConfig.getBrokerId(),
                     subscribeStoreService
             );
         }
@@ -84,6 +90,7 @@ public class MqttLogic {
     public MqttSubscribeMessageHandler subscribe() {
         if (mqttSubscribeHandler == null) {
             mqttSubscribeHandler = new MqttSubscribeMessageHandler(
+                    mqttLogicConfig.getBrokerId(),
                     subscribeStoreService,
                     retainMessageStoreService,
                     messageIdService
@@ -95,15 +102,35 @@ public class MqttLogic {
     public MqttPublishCompHandler publishComp() {
         if (mqttPublishCompHandler == null) {
             mqttPublishCompHandler = new MqttPublishCompHandler(
+                    mqttLogicConfig.getBrokerId(),
                     dupPublishMessageStoreService
             );
         }
         return mqttPublishCompHandler;
     }
 
+    public MqttPubrecHandler pubrec() {
+        if (mqttPubrecHandler == null) {
+            mqttPubrecHandler = new MqttPubrecHandler(
+                    mqttLogicConfig.getBrokerId()
+            );
+        }
+        return mqttPubrecHandler;
+    }
+
+    public MqttPubrelHandler pubrel() {
+        if (mqttPubrelHandler == null) {
+            mqttPubrelHandler = new MqttPubrelHandler(
+                    mqttLogicConfig.getBrokerId()
+            );
+        }
+        return mqttPubrelHandler;
+    }
+
     public MqttPublishAckHandler publishAck() {
         if (mqttPublishAckHandler == null) {
             mqttPublishAckHandler = new MqttPublishAckHandler(
+                    mqttLogicConfig.getBrokerId(),
                     dupPublishMessageStoreService
             );
         }
@@ -113,6 +140,7 @@ public class MqttLogic {
     public MqttPublishMessageHandler publish() {
         if (mqttPublishMessageHandler == null) {
             mqttPublishMessageHandler = new MqttPublishMessageHandler(
+                    mqttLogicConfig.getBrokerId(),
                     sessionStoreService,
                     internalMessageService,
                     retainMessageStoreService,
@@ -126,6 +154,7 @@ public class MqttLogic {
     public MqttConnectHandler connect() {
         if (mqttConnectHandler == null) {
             mqttConnectHandler = new MqttConnectHandler(
+                    mqttLogicConfig.getBrokerId(),
                     authService,
                     transportLocalStoreService,
                     sessionStoreService,
@@ -138,6 +167,7 @@ public class MqttLogic {
     public MqttDisConnectHandler disConnect() {
         if (mqttDisConnectHandler == null) {
             mqttDisConnectHandler = new MqttDisConnectHandler(
+                    mqttLogicConfig.getBrokerId(),
                     transportLocalStoreService,
                     sessionStoreService,
                     subscribeStoreService,

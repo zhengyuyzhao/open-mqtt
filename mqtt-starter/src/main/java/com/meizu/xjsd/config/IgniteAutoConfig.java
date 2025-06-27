@@ -5,6 +5,8 @@
 package com.meizu.xjsd.config;
 
 import cn.hutool.core.util.StrUtil;
+import com.meizu.xjsd.mqtt.logic.config.MqttLogicConfig;
+import jakarta.annotation.Resource;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
@@ -38,8 +40,8 @@ import java.util.Arrays;
 @SuppressWarnings("unchecked")
 public class IgniteAutoConfig {
 
-    @Value("${spring.mqtt.broker.id:1}")
-    private String instanceName;
+    @Resource
+    private MqttLogicConfig mqttLogicConfig;
 
     @Value("${spring.mqtt.broker.enable-multicast-group: false}")
     private boolean enableMulticastGroup;
@@ -59,7 +61,7 @@ public class IgniteAutoConfig {
     public Ignite ignite() throws Exception {
         IgniteConfiguration igniteConfiguration = new IgniteConfiguration();
         // Ignite实例名称
-        igniteConfiguration.setIgniteInstanceName(instanceName);
+        igniteConfiguration.setIgniteInstanceName(mqttLogicConfig.getBrokerId());
         // Ignite日志
         Logger logger = LoggerFactory.getLogger("org.apache.ignite");
         igniteConfiguration.setGridLogger(new Slf4jLogger(logger));
@@ -122,20 +124,18 @@ public class IgniteAutoConfig {
     @Bean
     public IgniteCache subscribeCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
-                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName("persistence-data-region")
-                .setBackups(1)
-                .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeCache");
+                .setReadFromBackup(true)
+                .setCacheMode(CacheMode.REPLICATED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
     @Bean
     public IgniteCache subscribeWildCardCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
-                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName("persistence-data-region")
-                .setBackups(1)
-                .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeWildCardCache");
+                .setReadFromBackup(true)
+                .setCacheMode(CacheMode.REPLICATED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeWildCardCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 

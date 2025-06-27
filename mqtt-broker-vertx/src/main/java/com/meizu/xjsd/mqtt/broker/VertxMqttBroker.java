@@ -6,6 +6,7 @@ import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 
 public class VertxMqttBroker implements MqttBroker {
 
@@ -20,7 +21,10 @@ public class VertxMqttBroker implements MqttBroker {
 
     @Override
     public void start() {
-        id = Vertx.vertx().deployVerticle(mqttServer, new DeploymentOptions().setThreadingModel(ThreadingModel.VIRTUAL_THREAD)).await();
+        id = Vertx.vertx().deployVerticle(mqttServer, new DeploymentOptions()
+//                .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
+                )
+                .await();
     }
 
     @Override

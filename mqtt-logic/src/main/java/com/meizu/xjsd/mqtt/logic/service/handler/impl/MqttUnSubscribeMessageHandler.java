@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class MqttUnSubscribeMessageHandler implements MessageHandler<IMqttUnsubscribeMessage> {
-
+    private final String brokerId;
     private final ISubscribeStoreService subscribeStoreService;
 
     @SneakyThrows
@@ -25,7 +25,7 @@ public class MqttUnSubscribeMessageHandler implements MessageHandler<IMqttUnsubs
         // This could involve processing the subscription, updating state, etc.
         MqttLogic.getExecutorService().submit(()->{
             handleInner(event, transport);
-        }).get();
+        });
     }
 
     private void handleInner(IMqttUnsubscribeMessage event, ITransport transport) {
@@ -35,6 +35,7 @@ public class MqttUnSubscribeMessageHandler implements MessageHandler<IMqttUnsubs
             subscribeStoreService.remove(topicFilter, clientId);
             log.debug("UNSUBSCRIBE - clientId: {}, topicFilter: {}", clientId, topicFilter);
         });
+        transport.unsubscribeAcknowledge(event.messageId());
     }
 
 

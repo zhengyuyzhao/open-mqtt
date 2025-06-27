@@ -18,6 +18,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMessage> {
+    private final String brokerId;
 
     private final ISessionStoreService sessionStoreService;
 
@@ -46,7 +47,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                 throw new MqttException(e);
             }
 
-        }).get();
+        });
 
     }
 
@@ -75,6 +76,17 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                     .messageBytes(messageBytes)
                     .mqttQoS(event.qosLevel().value())
                     .build());
+        }
+
+        switch (event.qosLevel()) {
+
+            case AT_LEAST_ONCE:
+                transport.publishAcknowledge(event.messageId());
+                break;
+
+            case EXACTLY_ONCE:
+                transport.publishReceived(event.messageId());
+                break;
         }
     }
 

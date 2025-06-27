@@ -2,19 +2,24 @@ package com.meizu.xjsd.mqtt.broker.adapter;
 
 import com.meizu.xjsd.mqtt.logic.entity.IMqttAuth;
 import com.meizu.xjsd.mqtt.logic.entity.IMqttWill;
+import com.meizu.xjsd.mqtt.logic.entity.codes.IMqttReasonCode;
+import com.meizu.xjsd.mqtt.logic.entity.codes.MqttSubAckRC;
+import com.meizu.xjsd.mqtt.logic.entity.codes.MqttUnsubAckRC;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttProperties;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.mqtt.MqttEndpoint;
+import io.vertx.mqtt.messages.codes.MqttPubAckReasonCode;
+import io.vertx.mqtt.messages.codes.MqttPubRecReasonCode;
+import io.vertx.mqtt.messages.codes.MqttSubAckReasonCode;
+import io.vertx.mqtt.messages.codes.MqttUnsubAckReasonCode;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class VertxTransportAdp implements ITransport {
-    private MqttEndpoint  mqttEndpoint;
+    private MqttEndpoint mqttEndpoint;
 
     public static ITransport of(MqttEndpoint mqttEndpoint) {
         if (mqttEndpoint == null) {
@@ -87,7 +92,7 @@ public class VertxTransportAdp implements ITransport {
 
     @Override
     public Integer publish(String topic, byte[] payload, MqttQoS qosLevel, boolean isDup, boolean isRetain) {
-        return mqttEndpoint.publish(topic, Buffer.buffer( payload), qosLevel, isDup, isRetain).await();
+        return mqttEndpoint.publish(topic, Buffer.buffer(payload), qosLevel, isDup, isRetain).await();
     }
 
     @Override
@@ -98,5 +103,56 @@ public class VertxTransportAdp implements ITransport {
     @Override
     public Integer publish(String topic, byte[] payload, MqttQoS qosLevel, boolean isDup, boolean isRetain, int messageId, MqttProperties properties) {
         return mqttEndpoint.publish(topic, Buffer.buffer(payload), qosLevel, isDup, isRetain, messageId, properties).await();
+    }
+
+    @Override
+    public void publishAcknowledge(int publishMessageId, IMqttReasonCode reasonCode, MqttProperties properties) {
+        mqttEndpoint.publishAcknowledge(publishMessageId, MqttPubAckReasonCode.valueOf(reasonCode.value()), properties);
+    }
+
+    @Override
+    public void publishReceived(int publishMessageId, IMqttReasonCode reasonCode, MqttProperties properties) {
+        mqttEndpoint.publishReceived(publishMessageId, MqttPubRecReasonCode.valueOf(reasonCode.value()), properties);
+    }
+
+    @Override
+    public void publishAcknowledge(int publishMessageId) {
+        mqttEndpoint.publishAcknowledge(publishMessageId);
+    }
+
+    @Override
+    public void publishReceived(int publishMessageId) {
+        mqttEndpoint.publishReceived(publishMessageId);
+    }
+
+    @Override
+    public void publishRelease(int publishMessageId) {
+        mqttEndpoint.publishRelease(publishMessageId);
+    }
+
+
+    @Override
+    public void subscribeAcknowledge(int subscribeMessageId, List<MqttSubAckRC> reasonCodes, MqttProperties properties) {
+        mqttEndpoint.subscribeAcknowledge(subscribeMessageId, reasonCodes.stream()
+                .map(reasonCode -> MqttSubAckReasonCode.valueOf(reasonCode.name()))
+                .toList(), properties);
+    }
+
+    @Override
+    public void unsubscribeAcknowledge(int unsubscribeMessageId) {
+        mqttEndpoint.unsubscribeAcknowledge(unsubscribeMessageId);
+    }
+
+
+    @Override
+    public void unsubscribeAcknowledge(int unsubscribeMessageId, List<MqttUnsubAckRC> reasonCodes, MqttProperties properties) {
+        mqttEndpoint.unsubscribeAcknowledge(unsubscribeMessageId, reasonCodes.stream()
+                .map(iMqttReasonCode -> MqttUnsubAckReasonCode.valueOf(iMqttReasonCode.name()))
+                .toList(), properties);
+    }
+
+    @Override
+    public void publishComplete(int publishMessageId) {
+        mqttEndpoint.publishComplete(publishMessageId);
     }
 }

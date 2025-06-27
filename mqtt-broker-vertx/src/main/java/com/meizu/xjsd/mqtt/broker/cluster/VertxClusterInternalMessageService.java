@@ -34,9 +34,12 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     private final ITransportLocalStoreService transportLocalStoreService;
     private final ISubscribeStoreService subscribeStoreService;
 
-    public VertxClusterInternalMessageService(ITransportLocalStoreService transportLocalStoreService,
+    private final String brokerId;
+
+    public VertxClusterInternalMessageService(String brokerId, ITransportLocalStoreService transportLocalStoreService,
                                               ISubscribeStoreService subscribeStoreService,
                                               VertxCluster vertxCluster) {
+        this.brokerId = brokerId;
         this.transportLocalStoreService = transportLocalStoreService;
         this.subscribeStoreService = subscribeStoreService;
         Vertx vertx = vertxCluster.getVertx();

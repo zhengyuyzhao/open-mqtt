@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class MqttLogicConfig {
+    private String brokerId = "default-broker";
     private int dupMessageRetryThreadPoolSize = 10;
     private int dupMessageRetryDelay = 10;
     private int dupMessageRetryInitialDelay = 10;

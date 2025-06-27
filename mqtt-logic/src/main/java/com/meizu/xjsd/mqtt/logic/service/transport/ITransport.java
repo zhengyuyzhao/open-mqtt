@@ -2,6 +2,9 @@ package com.meizu.xjsd.mqtt.logic.service.transport;
 
 import com.meizu.xjsd.mqtt.logic.entity.IMqttAuth;
 import com.meizu.xjsd.mqtt.logic.entity.IMqttWill;
+import com.meizu.xjsd.mqtt.logic.entity.codes.IMqttReasonCode;
+import com.meizu.xjsd.mqtt.logic.entity.codes.MqttSubAckRC;
+import com.meizu.xjsd.mqtt.logic.entity.codes.MqttUnsubAckRC;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttProperties;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -47,4 +50,23 @@ public interface ITransport {
     Integer publish(String topic, byte[] payload, MqttQoS qosLevel, boolean isDup, boolean isRetain, int messageId);
 
     Integer publish(String topic, byte[] payload, MqttQoS qosLevel, boolean isDup, boolean isRetain, int messageId, MqttProperties properties);
+
+    void publishAcknowledge(int publishMessageId, IMqttReasonCode reasonCode, MqttProperties properties);
+
+    void publishReceived(int publishMessageId, IMqttReasonCode reasonCode, MqttProperties properties);
+
+    void publishAcknowledge(int publishMessageId);
+
+    void publishReceived(int publishMessageId);
+
+    void publishRelease(int publishMessageId);
+
+    void subscribeAcknowledge(int subscribeMessageId, List<MqttSubAckRC> reasonCodes, MqttProperties properties);
+
+    void unsubscribeAcknowledge(int unsubscribeMessageId);
+
+    void unsubscribeAcknowledge(int unsubscribeMessageId, List<MqttUnsubAckRC> reasonCodes, MqttProperties properties);
+
+    void publishComplete(int publishMessageId);
+
 }

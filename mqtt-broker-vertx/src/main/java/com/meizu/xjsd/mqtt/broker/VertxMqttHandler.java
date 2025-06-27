@@ -13,12 +13,17 @@ public class VertxMqttHandler extends VerticleBase {
     private MqttLogic mqttLogic;
 
     public VertxMqttHandler(MqttLogic mqttLogic) {
-        Vertx vertx = Vertx.vertx();
-        this.mqttServer = MqttServer.create(vertx);
         this.mqttLogic = mqttLogic;
+
+    }
+
+
+    @Override
+    public Future<?> start() throws Exception {
+        this.mqttServer = MqttServer.create(vertx);
         mqttServer.endpointHandler(endpoint -> {
-            endpoint.subscriptionAutoAck(true);
-            endpoint.publishAutoAck(true);
+            endpoint.subscriptionAutoAck(false);
+            endpoint.publishAutoAck(false);
             mqttLogic.connect().handle(VertxTransportAdp.of(endpoint));
             endpoint.publishHandler(message -> {
                 mqttLogic.publish().handle(VertxMqttPublishMessageAdp.of(message), VertxTransportAdp.of(endpoint));
@@ -32,19 +37,18 @@ public class VertxMqttHandler extends VerticleBase {
                 mqttLogic.publishAck().handle(VertxMqttPubAckMessageAdp.of(ackMessage), VertxTransportAdp.of(endpoint));
             }).disconnectMessageHandler(close -> {
                 mqttLogic.disConnect().handle(VertxTransportAdp.of(endpoint));
+            }).publishReleaseHandler(id -> {
+                mqttLogic.pubrel().handle(id, VertxTransportAdp.of(endpoint));
+            }).publishReceivedHandler(id->{
+                mqttLogic.pubrec().handle(id, VertxTransportAdp.of(endpoint));
             }).exceptionHandler(throwable -> {
-                log.error("MQTT endpoint exception: ", throwable);
+                log.error("MQTT endpoint exception: {}", throwable.getMessage());
             });
 
 
             endpoint.accept(mqttLogic.isSessionPresent(endpoint.clientIdentifier()));
 
         });
-    }
-
-
-    @Override
-    public Future<?> start() throws Exception {
         return mqttServer.listen(mqttLogic.getMqttLogicConfig().getServerPort());
     }
 

@@ -3,13 +3,9 @@ package com.meizu.xjsd.mqtt.logic.service.handler.impl;
 import cn.hutool.core.util.StrUtil;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import com.meizu.xjsd.mqtt.logic.entity.IMqttSubscribeMessage;
+import com.meizu.xjsd.mqtt.logic.entity.codes.MqttSubAckRC;
 import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
-import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
-import com.meizu.xjsd.mqtt.logic.service.store.IMessageIdService;
-import com.meizu.xjsd.mqtt.logic.service.store.IRetainMessageStoreService;
-import com.meizu.xjsd.mqtt.logic.service.store.RetainMessageStoreDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
-import com.meizu.xjsd.mqtt.logic.service.store.SubscribeStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
@@ -23,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscribeMessage> {
+    private final String brokerId;
 
     private final ISubscribeStoreService subscribeStoreService;
 
@@ -33,12 +30,12 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
 
     @SneakyThrows
     @Override
-    public void handle(IMqttSubscribeMessage event, ITransport transport){
+    public void handle(IMqttSubscribeMessage event, ITransport transport) {
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Subscribe Message: " + event);
         log.info("Handling MQTT Subscribe Message: {}", event);
-        MqttLogic.getExecutorService().submit(() -> this.handleSubscribe(event, transport)).get();
+        MqttLogic.getExecutorService().submit(() -> this.handleSubscribe(event, transport));
 
     }
 
@@ -62,10 +59,14 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
                     MqttQoS mqttQoS = topicSubscription.qualityOfService();
                     this.sendRetainMessage(transport, topicFilter, mqttQoS);
                 });
+                transport.subscribeAcknowledge(event.messageId(), mqttQoSList);
             } else {
-                transport.close();
+                List<MqttSubAckRC> subAckRCS = topicSubscriptions.stream().map(
+                        topicSubscription -> MqttSubAckRC.TOPIC_FILTER_INVALID
+                ).toList();
+                transport.subscribeAcknowledge(event.messageId(), subAckRCS, event.properties());
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

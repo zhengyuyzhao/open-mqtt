@@ -15,6 +15,7 @@ import lombok.SneakyThrows;
 
 @AllArgsConstructor
 public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
+    private final String brokerId;
     private final ITransportLocalStoreService transportLocalStoreService;
     private final ISessionStoreService sessionStoreService;
     private final ISubscribeStoreService subscribeStoreService;
@@ -31,7 +32,7 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }).get();
+        });
 
     }
 

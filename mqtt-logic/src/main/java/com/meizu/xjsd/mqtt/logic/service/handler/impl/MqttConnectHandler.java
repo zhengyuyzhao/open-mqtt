@@ -22,6 +22,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class MqttConnectHandler implements ConnectHandler<ITransport> {
+    private final String brokerId;
     private final IAuthService authService;
     private final ITransportLocalStoreService transportLocalStoreService;
     private final ISessionStoreService sessionStoreService;
@@ -32,7 +33,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
     @Override
     public void handle(ITransport transport) {
 
-        MqttLogic.getExecutorService().submit(() -> this.handleInner(transport)).get();
+        MqttLogic.getExecutorService().submit(() -> this.handleInner(transport));
 
     }
 

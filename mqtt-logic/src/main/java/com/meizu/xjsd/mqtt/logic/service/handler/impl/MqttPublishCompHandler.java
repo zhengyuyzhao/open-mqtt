@@ -10,6 +10,7 @@ import lombok.SneakyThrows;
 
 @RequiredArgsConstructor
 public class MqttPublishCompHandler implements MessageHandler<IMqttPubCompMessage> {
+    private final String brokerId;
     private final IDupPublishMessageStoreService dupPublishMessageStoreService;
 
 
@@ -22,7 +23,7 @@ public class MqttPublishCompHandler implements MessageHandler<IMqttPubCompMessag
 
         MqttLogic.getExecutorService().submit(() -> {
             handleInner(event, transport);
-        }).get();
+        });
 
     }
 
