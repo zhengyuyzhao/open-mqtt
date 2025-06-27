@@ -14,6 +14,7 @@ import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -29,15 +30,15 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
 
     private final IMessageIdService messageIdService;
 
-    private final IInternalMessageService internalMessageService;
 
+    @SneakyThrows
     @Override
-    public void handle(IMqttSubscribeMessage event, ITransport transport) {
+    public void handle(IMqttSubscribeMessage event, ITransport transport){
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Subscribe Message: " + event);
         log.info("Handling MQTT Subscribe Message: {}", event);
-        MqttLogic.getExecutorService().execute(() -> this.handleSubscribe(event, transport));
+        MqttLogic.getExecutorService().submit(() -> this.handleSubscribe(event, transport)).get();
 
     }
 

@@ -14,6 +14,7 @@ import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -27,9 +28,12 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
     private final IDupPublishMessageStoreService dupPublishMessageStoreService;
 
 
+    @SneakyThrows
     @Override
     public void handle(ITransport transport) {
-        MqttLogic.getExecutorService().execute(() -> this.handleInner(transport));
+
+        MqttLogic.getExecutorService().submit(() -> this.handleInner(transport)).get();
+
     }
 
     private void handleInner(ITransport transport) {

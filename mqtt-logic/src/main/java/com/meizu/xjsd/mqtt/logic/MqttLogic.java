@@ -75,8 +75,7 @@ public class MqttLogic {
     public MqttUnSubscribeMessageHandler unSubscribe() {
         if (mqttUnSubscribeHandler == null) {
             mqttUnSubscribeHandler = new MqttUnSubscribeMessageHandler(
-                    subscribeStoreService,
-                    internalMessageService
+                    subscribeStoreService
             );
         }
         return mqttUnSubscribeHandler;
@@ -87,8 +86,7 @@ public class MqttLogic {
             mqttSubscribeHandler = new MqttSubscribeMessageHandler(
                     subscribeStoreService,
                     retainMessageStoreService,
-                    messageIdService,
-                    internalMessageService
+                    messageIdService
             );
         }
         return mqttSubscribeHandler;

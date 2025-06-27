@@ -20,6 +20,7 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMultic
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -125,6 +126,16 @@ public class IgniteAutoConfig {
                 .setDataRegionName("persistence-data-region")
                 .setBackups(1)
                 .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeCache");
+        return ignite().getOrCreateCache(cacheConfiguration);
+    }
+
+    @Bean
+    public IgniteCache subscribeWildCardCache() throws Exception {
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName("persistence-data-region")
+                .setBackups(1)
+                .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeWildCardCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 

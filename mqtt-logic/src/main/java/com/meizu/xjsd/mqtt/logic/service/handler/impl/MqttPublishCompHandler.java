@@ -6,21 +6,23 @@ import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
 import com.meizu.xjsd.mqtt.logic.service.store.IDupPublishMessageStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
 @RequiredArgsConstructor
 public class MqttPublishCompHandler implements MessageHandler<IMqttPubCompMessage> {
     private final IDupPublishMessageStoreService dupPublishMessageStoreService;
 
 
+    @SneakyThrows
     @Override
     public void handle(IMqttPubCompMessage event, ITransport transport) {
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getExecutorService().execute(()->{
+        MqttLogic.getExecutorService().submit(() -> {
             handleInner(event, transport);
-        });
+        }).get();
 
     }
 

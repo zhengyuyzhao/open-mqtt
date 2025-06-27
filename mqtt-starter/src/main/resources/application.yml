@@ -5,3 +5,7 @@ spring:
       id: mqtt-broker-1
       cache:
         persistenceStorePath: /data/ignite/store
+logging:
+  level:
+    root: info
+    org.apache.ignite: error

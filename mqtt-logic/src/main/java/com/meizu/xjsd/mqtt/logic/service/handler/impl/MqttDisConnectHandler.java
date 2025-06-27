@@ -11,6 +11,7 @@ import com.meizu.xjsd.mqtt.logic.service.store.SessionStoreDTO;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 
 @AllArgsConstructor
 public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
@@ -19,15 +20,19 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
     private final ISubscribeStoreService subscribeStoreService;
     private final IInternalMessageService internalMessageService;
 
+    @SneakyThrows
     @Override
     public void handle(ITransport transport) {
-        MqttLogic.getExecutorService().execute(() -> {
+
+        MqttLogic.getExecutorService().submit(() -> {
+
             try {
                 handleInner(transport);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        });
+        }).get();
+
     }
 
     private void handleInner(ITransport transport) throws Exception {

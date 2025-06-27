@@ -7,6 +7,7 @@ import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -16,15 +17,15 @@ import java.util.List;
 public class MqttUnSubscribeMessageHandler implements MessageHandler<IMqttUnsubscribeMessage> {
 
     private final ISubscribeStoreService subscribeStoreService;
-    private final IInternalMessageService internalMessageService;
 
+    @SneakyThrows
     @Override
-    public void handle(IMqttUnsubscribeMessage event, ITransport transport) {
+    public void handle(IMqttUnsubscribeMessage event, ITransport transport){
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
-        MqttLogic.getExecutorService().execute(()->{
+        MqttLogic.getExecutorService().submit(()->{
             handleInner(event, transport);
-        });
+        }).get();
     }
 
     private void handleInner(IMqttUnsubscribeMessage event, ITransport transport) {

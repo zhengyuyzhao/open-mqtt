@@ -33,6 +33,9 @@ public class IgniteStoreConfig {
     @Resource(name = "subscribeCache")
     IgniteCache<String, Map<String, SubscribeStoreDTO>> subscribeCache;
 
+    @Resource(name = "subscribeWildCardCache")
+    IgniteCache<String, Map<String, SubscribeStoreDTO>> subscribeWildCardCache;
+
     @Bean
     public IDupPublishMessageStoreService dupPublishMessageStoreService() {
         // Assuming you have a concrete implementation of IDupPublishMessageStoreService
@@ -72,6 +75,7 @@ public class IgniteStoreConfig {
         // Assuming you have a concrete implementation of ISubscribeStoreService
         return new IgniteSubscribeStoreService(
                 ignite,
+                subscribeWildCardCache,
                 subscribeCache
         );
     }

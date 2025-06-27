@@ -1,6 +1,7 @@
 package com.meizu.xjsd.mqtt.logic.service.handler.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.meizu.xjsd.mqtt.logic.MqttException;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import com.meizu.xjsd.mqtt.logic.entity.IMqttPublishMessage;
 import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
@@ -9,6 +10,7 @@ import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -28,22 +30,23 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
     private final ISubscribeStoreService subscribeStoreService;
 
 
+    @SneakyThrows
     @Override
     public void handle(IMqttPublishMessage event, ITransport transport) {
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getExecutorService().execute(() -> {
+        MqttLogic.getExecutorService().submit(() -> {
             try {
                 // Call the inner handling logic
                 handleInner(event, transport);
             } catch (Exception e) {
                 // Handle any exceptions that occur during processing
-                e.printStackTrace();
+                throw new MqttException(e);
             }
 
-        });
+        }).get();
 
     }
 
@@ -75,7 +78,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
         }
     }
 
-    private void storeDupMessage(IMqttPublishMessage dto ) {
+    private void storeDupMessage(IMqttPublishMessage dto) {
         MqttLogic.getExecutorService().execute(() -> {
             try {
                 List<SubscribeStoreDTO> list = subscribeStoreService.search(dto.topicName());

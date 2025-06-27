@@ -5,7 +5,9 @@ import com.meizu.xjsd.mqtt.broker.cluster.VertxCluster;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import io.vertx.core.*;
 import io.vertx.mqtt.MqttServer;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class VertxMqttHandler extends VerticleBase {
     private MqttServer mqttServer;
     private MqttLogic mqttLogic;
@@ -30,6 +32,8 @@ public class VertxMqttHandler extends VerticleBase {
                 mqttLogic.publishAck().handle(VertxMqttPubAckMessageAdp.of(ackMessage), VertxTransportAdp.of(endpoint));
             }).disconnectMessageHandler(close -> {
                 mqttLogic.disConnect().handle(VertxTransportAdp.of(endpoint));
+            }).exceptionHandler(throwable -> {
+                log.error("MQTT endpoint exception: ", throwable);
             });
 
 
