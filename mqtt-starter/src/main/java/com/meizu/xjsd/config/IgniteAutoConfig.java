@@ -22,7 +22,6 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMultic
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -126,7 +125,9 @@ public class IgniteAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setDataRegionName("persistence-data-region")
                 .setReadFromBackup(true)
-                .setCacheMode(CacheMode.REPLICATED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeCache");
+                .setCacheMode(CacheMode.REPLICATED)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("subscribeCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
@@ -135,7 +136,9 @@ public class IgniteAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setDataRegionName("persistence-data-region")
                 .setReadFromBackup(true)
-                .setCacheMode(CacheMode.REPLICATED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("subscribeWildCardCache");
+                .setCacheMode(CacheMode.REPLICATED)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("subscribeWildCardCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
@@ -145,7 +148,9 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName("persistence-data-region")
                 .setBackups(1)
-                .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("sessionCache");
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("sessionCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
@@ -155,7 +160,9 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName("persistence-data-region")
                 .setBackups(1)
-                .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("dupPublishMessageCache");
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("dupPublishMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 //
