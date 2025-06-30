@@ -22,7 +22,7 @@ public class IgniteStoreConfig {
     IgniteCache<String, Long> messageIdCache;
 
     @Resource(name = "dupPublishMessageCache")
-    IgniteCache<String, List<DupPublishMessageStoreDTO>> dupPublishMessageCache;
+    IgniteCache<String, Map<Integer, DupPublishMessageStoreDTO>> dupPublishMessageCache;
 
 
     @Resource(name = "retainMessageCache")
