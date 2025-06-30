@@ -178,7 +178,8 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setReadFromBackup(true)
-                .setCacheMode(CacheMode.REPLICATED)
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setBackups(1)
 //                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("transportCache");
         return ignite().getOrCreateCache(cacheConfiguration);
