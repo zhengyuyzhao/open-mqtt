@@ -1,8 +1,10 @@
 package com.meizu.xjsd.mqtt.logic.config;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString
 public class MqttLogicConfig {
     private String brokerId = "default-broker";
     private int dupMessageRetryThreadPoolSize = 10;

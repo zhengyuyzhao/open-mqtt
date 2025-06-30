@@ -5,8 +5,8 @@
 package com.meizu.xjsd.config;
 
 import cn.hutool.core.util.StrUtil;
-import com.meizu.xjsd.mqtt.logic.config.MqttLogicConfig;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
@@ -22,7 +22,6 @@ import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMultic
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +33,7 @@ import java.util.Arrays;
 /**
  * 自动配置apache ignite
  */
+@Slf4j
 @Configuration
 @EnableConfigurationProperties({IgniteProperties.class, BrokerConfig.class})
 @SuppressWarnings("unchecked")
@@ -60,6 +60,9 @@ public class IgniteAutoConfig {
 
     @Bean
     public Ignite ignite() throws Exception {
+        log.info("Starting Ignite with configuration: {}", igniteProperties);
+        log.info("Broker configuration: {}", brokerConfig.getBroker());
+
         IgniteConfiguration igniteConfiguration = new IgniteConfiguration();
         // Ignite实例名称
         igniteConfiguration.setIgniteInstanceName(brokerConfig.getBroker().getBrokerId());

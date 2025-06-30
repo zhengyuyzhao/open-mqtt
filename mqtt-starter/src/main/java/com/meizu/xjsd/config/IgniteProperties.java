@@ -5,12 +5,14 @@
 package com.meizu.xjsd.config;
 
 import lombok.Data;
+import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * ignite属性配置
  */
 @Data
+@ToString
 @ConfigurationProperties(prefix = "spring.mqtt.store.ignite")
 public class IgniteProperties {
 	private boolean enableMulticastGroup = false;
