@@ -12,26 +12,28 @@ import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.transactions.Transaction;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Builder
 @RequiredArgsConstructor
 public class IgniteDupPublishMessageStoreService implements IDupPublishMessageStoreService {
     private final Ignite ignite;
-    private final IgniteCache<String, List<DupPublishMessageStoreDTO>> store;
-
+    private final IgniteCache<String, Map<Integer, DupPublishMessageStoreDTO>> store;
 
     @Override
     public void put(String clientId, DupPublishMessageStoreDTO dupPublishMessageStoreDTO) {
         IgniteTransactions transactions = ignite.transactions();
         try (Transaction tx = transactions.txStart()) {
-            List<DupPublishMessageStoreDTO> list = store.get(clientId);
-            if (list == null) {
-                list = new java.util.ArrayList<>();
+            Map<Integer, DupPublishMessageStoreDTO> map = store.get(clientId);
+            if (map == null) {
+                map = new HashMap<>();
             }
-            list.add(dupPublishMessageStoreDTO);
-            store.put(clientId, list);
+            map.put(dupPublishMessageStoreDTO.getMessageId(), dupPublishMessageStoreDTO);
+            store.put(clientId, map);
 
             tx.commit();
         }
@@ -44,17 +46,17 @@ public class IgniteDupPublishMessageStoreService implements IDupPublishMessageSt
 
     @Override
     public List<DupPublishMessageStoreDTO> get(String clientId) {
-        return store.get(clientId);
+        return Optional.ofNullable(store.get(clientId)).orElse(new HashMap<>()).values().stream().toList();
     }
 
     @Override
     public void remove(String clientId, int messageId) {
         IgniteTransactions transactions = ignite.transactions();
         try (Transaction tx = transactions.txStart()) {
-            List<DupPublishMessageStoreDTO> list = store.get(clientId);
-            if (list != null) {
-                list.removeIf(dto -> dto.getMessageId() == messageId);
-                store.put(clientId, list);
+            Map<Integer, DupPublishMessageStoreDTO> map = store.get(clientId);
+            if (map != null) {
+                map.remove(messageId);
+                store.put(clientId, map);
             }
 
             tx.commit();
