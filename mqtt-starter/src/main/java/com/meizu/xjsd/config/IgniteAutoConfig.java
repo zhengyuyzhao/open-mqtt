@@ -69,6 +69,7 @@ public class IgniteAutoConfig {
         igniteConfiguration.setGridLogger(new Slf4jLogger(logger));
         igniteConfiguration.setSnapshotPath(igniteProperties().getSnapshotPath());
         igniteConfiguration.setWorkDirectory(igniteProperties().getWorkPath());
+        igniteConfiguration.setMetricsLogFrequency(0);
         // 非持久化数据区域
         DataRegionConfiguration notPersistence = new DataRegionConfiguration().setPersistenceEnabled(false)
                 .setInitialSize(igniteProperties().getNotPersistenceInitialSize() * 1024 * 1024)
@@ -176,9 +177,9 @@ public class IgniteAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
-                .setBackups(1)
-                .setCacheMode(CacheMode.PARTITIONED)
-                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setReadFromBackup(true)
+                .setCacheMode(CacheMode.REPLICATED)
+//                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("transportCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }

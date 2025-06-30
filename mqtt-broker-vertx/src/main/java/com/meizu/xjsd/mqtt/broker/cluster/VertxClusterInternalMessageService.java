@@ -6,15 +6,17 @@ import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
 import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.SubscribeStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
-import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.internal.StringUtil;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,53 +55,99 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     @Override
     public void internalPublish(InternalMessageDTO internalMessageDTO) throws Exception{
         log.info("Publishing internal message: {}", internalMessageDTO);
-        if (transportLocalStoreService.getTransport(internalMessageDTO.getClientId()) != null) {
-            // If the transport exists, publish to the specific broker
-            log.info("Publishing internal message to specific broker: {}", internalMessageDTO.getClientId());
-            internalSubscribe(internalMessageDTO);
-            return;
+        executorService.execute( ()->{
+                publishInner(internalMessageDTO);
+        });
+
+    }
+
+    @SneakyThrows
+    private void publishInner(InternalMessageDTO internalMessageDTO) {
+
+        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(internalMessageDTO);
+        if (subscribeStoreDTOS == null) return;
+
+        for (SubscribeStoreDTO subscribeStoreDTO: subscribeStoreDTOS) {
+            internalMessageDTO.setToClientId(subscribeStoreDTO.getClientId());
+            if (transportLocalStoreService.getTransport(subscribeStoreDTO.getClientId()) != null) {
+                // If the transport exists, publish to the specific broker
+                log.info("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
+                internalSubscribe(internalMessageDTO);
+                continue;
+            }
+
+            String broker = transportStoreService.getBroker(subscribeStoreDTO.getClientId());
+            if (!StringUtil.isNullOrEmpty(broker)) {
+                // If the transport exists in the store, publish to the specific broker
+                log.info("Publishing internal message to specific broker from store: {}", broker);
+                eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
+            } else {
+                eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, objectMapper.writeValueAsString(internalMessageDTO));
+            }
+
         }
-        String json = objectMapper.writeValueAsString(internalMessageDTO);
-        String broker = transportStoreService.getBroker(internalMessageDTO.getClientId());
-        if (!StringUtil.isNullOrEmpty(broker)) {
-            // If the transport exists in the store, publish to the specific broker
-            log.info("Publishing internal message to specific broker from store: {}", internalMessageDTO.getClientId());
-            eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, json);
-            return;
-        }
 
-
-        eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, json);
-
+//        String json = objectMapper.writeValueAsString(internalMessageDTO);
+//        String broker = transportStoreService.getBroker(internalMessageDTO.getClientId());
+//        if (!StringUtil.isNullOrEmpty(broker)) {
+//            // If the transport exists in the store, publish to the specific broker
+//            log.info("Publishing internal message to specific broker from store: {}", broker);
+//            eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, json);
+//            return;
+//        }
+//
+//        eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, json);
     }
 
     @Override
     public void internalSubscribe(InternalMessageDTO internalMessageDTO) {
         executorService.execute(() -> {
             try {
-                List<SubscribeStoreDTO> subscribeStoreDTOS =  subscribeStoreService.search(internalMessageDTO.getTopic());
-                if (CollectionUtil.isEmpty(subscribeStoreDTOS)) {
-                    log.info("No subscribers found for topic: {}", internalMessageDTO.getTopic());
-                    return;
-                }
-                for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
-                    ITransport transport = transportLocalStoreService.getTransport(subscribeStoreDTO.getClientId());
-                    if (transport == null) {
-                        log.info("Transport not found for clientId: {}", subscribeStoreDTO.getClientId());
-                        return;
+                if (StringUtil.isNullOrEmpty(internalMessageDTO.getToClientId())) {
+                    ITransport transport = transportLocalStoreService.getTransport(internalMessageDTO.getToClientId());
+                    if (transport != null) {
+                        log.info("Transport Topic:{} to clientId: {}", internalMessageDTO.getTopic(),
+                                internalMessageDTO.getToClientId());
+                        transport.publish(internalMessageDTO.getTopic(),
+                                internalMessageDTO.getMessageBytes(),
+                                MqttQoS.valueOf(internalMessageDTO.getMqttQoS()),
+                                internalMessageDTO.isRetain(),
+                                internalMessageDTO.isDup());
+
                     }
-                    log.info("Publishing internal message to clientId: {}, topic: {}", subscribeStoreDTO.getClientId(), internalMessageDTO.getTopic());
-                    transport.publish(internalMessageDTO.getTopic(),
-                            internalMessageDTO.getMessageBytes(),
-                            MqttQoS.valueOf(internalMessageDTO.getMqttQoS()),
-                            internalMessageDTO.isRetain(),
-                            internalMessageDTO.isDup());
+                } else {
+                    // TODO 保留逻辑
+                    List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(internalMessageDTO);
+                    if (subscribeStoreDTOS == null) return;
+                    for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
+                        ITransport transport = transportLocalStoreService.getTransport(subscribeStoreDTO.getClientId());
+                        if (transport == null) {
+                            log.info("Transport not found for clientId: {}", subscribeStoreDTO.getClientId());
+                            return;
+                        }
+                        log.info("Publishing internal message to clientId: {}, topic: {}", subscribeStoreDTO.getClientId(), internalMessageDTO.getTopic());
+                        transport.publish(internalMessageDTO.getTopic(),
+                                internalMessageDTO.getMessageBytes(),
+                                MqttQoS.valueOf(internalMessageDTO.getMqttQoS()),
+                                internalMessageDTO.isRetain(),
+                                internalMessageDTO.isDup());
+                    }
                 }
             } catch (Exception e) {
                 log.error("Error processing internal message: {}", internalMessageDTO, e);
             }
         });
 
+    }
+
+    @Nullable
+    private List<SubscribeStoreDTO> getSubscribeStoreDTOS(InternalMessageDTO internalMessageDTO) {
+        List<SubscribeStoreDTO> subscribeStoreDTOS =  subscribeStoreService.search(internalMessageDTO.getTopic());
+        if (CollectionUtil.isEmpty(subscribeStoreDTOS)) {
+            log.info("No subscribers found for topic: {}", internalMessageDTO.getTopic());
+            return null;
+        }
+        return subscribeStoreDTOS;
     }
 
 

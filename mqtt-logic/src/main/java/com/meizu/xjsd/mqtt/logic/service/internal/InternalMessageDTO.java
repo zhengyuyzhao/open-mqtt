@@ -35,5 +35,7 @@ public class InternalMessageDTO implements Serializable {
 
     private boolean dup;
 
+    private String toClientId;
+
 
 }

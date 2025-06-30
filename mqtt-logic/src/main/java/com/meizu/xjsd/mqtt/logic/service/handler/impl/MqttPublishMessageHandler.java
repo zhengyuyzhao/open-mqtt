@@ -51,7 +51,12 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
     }
 
     private void handleInner(IMqttPublishMessage event, ITransport transport) throws Exception {
+        if (event.qosLevel().value() > 0) {
+            storeDupMessage(event);
+        }
+
         String clientId = transport.clientIdentifier();
+
         // publish 延长session失效时间
         if (sessionStoreService.containsKey(clientId)) {
             SessionStoreDTO sessionStoreDTO = sessionStoreService.get(clientId);
@@ -63,11 +68,12 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                 .dup(false).retain(false)
                 .clientId(clientId)
                 .build();
+
+
+
         internalCommunication.internalPublish(internalMessageDTO);
 
-        if (event.qosLevel().value() > 0) {
-            storeDupMessage(event);
-        }
+
 
         if (event.isRetain()) {
             retainMessageStoreService.put(event.topicName(), RetainMessageStoreDTO.builder()
@@ -90,7 +96,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
     }
 
     private void storeDupMessage(IMqttPublishMessage dto) {
-        MqttLogic.getExecutorService().execute(() -> {
+
             try {
                 List<SubscribeStoreDTO> list = subscribeStoreService.search(dto.topicName());
                 if (CollectionUtil.isEmpty(list)) {
@@ -115,7 +121,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+
     }
 
 
