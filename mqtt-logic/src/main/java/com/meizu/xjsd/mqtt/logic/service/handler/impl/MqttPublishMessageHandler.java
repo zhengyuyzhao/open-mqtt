@@ -18,7 +18,6 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMessage> {
-    private final String brokerId;
 
     private final ISessionStoreService sessionStoreService;
 

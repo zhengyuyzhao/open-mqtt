@@ -10,7 +10,6 @@ import lombok.SneakyThrows;
 
 @RequiredArgsConstructor
 public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage> {
-    private final String brokerId;
     private final IDupPublishMessageStoreService dupPublishMessageStoreService;
 
 

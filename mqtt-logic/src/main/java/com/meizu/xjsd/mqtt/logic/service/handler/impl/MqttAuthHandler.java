@@ -8,7 +8,6 @@ import lombok.SneakyThrows;
 
 @RequiredArgsConstructor
 public class MqttAuthHandler implements ConnectHandler<ITransport> {
-    private final String brokerId;
 
     @SneakyThrows
     @Override

@@ -1,6 +1,7 @@
 package com.meizu.xjsd.config;
 
 import com.meizu.xjsd.mqtt.logic.service.store.*;
+import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import com.meizu.xjsd.mqtt.store.memory.*;
 import jakarta.annotation.Resource;
 import org.apache.ignite.Ignite;
@@ -35,6 +36,9 @@ public class IgniteStoreConfig {
 
     @Resource(name = "subscribeWildCardCache")
     IgniteCache<String, Map<String, SubscribeStoreDTO>> subscribeWildCardCache;
+
+    @Resource(name = "transportCache")
+    IgniteCache<String, String> transportCache;
 
     @Bean
     public IDupPublishMessageStoreService dupPublishMessageStoreService() {
@@ -77,6 +81,14 @@ public class IgniteStoreConfig {
                 ignite,
                 subscribeWildCardCache,
                 subscribeCache
+        );
+    }
+
+    @Bean
+    public IClientStoreService clientStoreService() {
+        // Assuming you have a concrete implementation of ITransportLocalStoreService
+        return new IgniteClientStoreService(
+                transportCache
         );
     }
 

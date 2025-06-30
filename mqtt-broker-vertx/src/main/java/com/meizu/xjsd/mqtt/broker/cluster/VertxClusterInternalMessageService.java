@@ -1,7 +1,6 @@
 package com.meizu.xjsd.mqtt.broker.cluster;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
@@ -9,11 +8,12 @@ import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.SubscribeStoreDTO;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
+import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.util.internal.StringUtil;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
-import io.vertx.core.json.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class VertxClusterInternalMessageService implements IInternalMessageService {
 
-    private static final String INTERNAL_MESSAGE_TOPIC_PREFIX = "internal.message";
+    private static final String INTERNAL_MESSAGE_TOPIC_PREFIX = "internal.message.";
     private EventBus eb;
     private ConcurrentHashMap<String, MessageConsumer> consumerMap = new ConcurrentHashMap<>();
 
@@ -32,15 +32,18 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
     private final ITransportLocalStoreService transportLocalStoreService;
+    private final IClientStoreService transportStoreService;
     private final ISubscribeStoreService subscribeStoreService;
 
     private final String brokerId;
 
     public VertxClusterInternalMessageService(String brokerId, ITransportLocalStoreService transportLocalStoreService,
+                                              IClientStoreService transportStoreService,
                                               ISubscribeStoreService subscribeStoreService,
                                               VertxCluster vertxCluster) {
         this.brokerId = brokerId;
         this.transportLocalStoreService = transportLocalStoreService;
+        this.transportStoreService = transportStoreService;
         this.subscribeStoreService = subscribeStoreService;
         Vertx vertx = vertxCluster.getVertx();
         eb = vertx.eventBus();
@@ -50,7 +53,22 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     @Override
     public void internalPublish(InternalMessageDTO internalMessageDTO) throws Exception{
         log.info("Publishing internal message: {}", internalMessageDTO);
+        if (transportLocalStoreService.getTransport(internalMessageDTO.getClientId()) != null) {
+            // If the transport exists, publish to the specific broker
+            log.info("Publishing internal message to specific broker: {}", internalMessageDTO.getClientId());
+            internalSubscribe(internalMessageDTO);
+            return;
+        }
         String json = objectMapper.writeValueAsString(internalMessageDTO);
+        String broker = transportStoreService.getBroker(internalMessageDTO.getClientId());
+        if (!StringUtil.isNullOrEmpty(broker)) {
+            // If the transport exists in the store, publish to the specific broker
+            log.info("Publishing internal message to specific broker from store: {}", internalMessageDTO.getClientId());
+            eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, json);
+            return;
+        }
+
+
         eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, json);
 
     }
@@ -94,8 +112,17 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 log.error("Error processing internal message {}", e);
             }
         });
+        MessageConsumer<String> point2PointConsumer =  eb.consumer(INTERNAL_MESSAGE_TOPIC_PREFIX + brokerId, message -> {
+            try {
+                InternalMessageDTO dto = objectMapper.readValue(message.body(), InternalMessageDTO.class);
+                internalSubscribe(dto);
+            } catch (Exception e) {
+                log.error("Error processing internal message {}", e);
+            }
+        });
         log.info("Registered internal message listener");
         consumerMap.put(INTERNAL_MESSAGE_TOPIC_PREFIX, consumer);
+        consumerMap.put(INTERNAL_MESSAGE_TOPIC_PREFIX + brokerId, point2PointConsumer);
     }
 
 //    @Override

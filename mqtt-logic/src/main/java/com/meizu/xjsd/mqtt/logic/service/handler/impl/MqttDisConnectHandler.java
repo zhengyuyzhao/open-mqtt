@@ -8,6 +8,7 @@ import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
 import com.meizu.xjsd.mqtt.logic.service.store.ISessionStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.SessionStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import lombok.AllArgsConstructor;
@@ -15,11 +16,12 @@ import lombok.SneakyThrows;
 
 @AllArgsConstructor
 public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
-    private final String brokerId;
     private final ITransportLocalStoreService transportLocalStoreService;
     private final ISessionStoreService sessionStoreService;
     private final ISubscribeStoreService subscribeStoreService;
     private final IInternalMessageService internalMessageService;
+    private final IClientStoreService clientStoreService;
+    private final String brokerId;
 
     @SneakyThrows
     @Override
@@ -64,5 +66,6 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
         if (transport.isCleanSession()) {
             subscribeStoreService.removeForClient(transport.clientIdentifier());
         }
+        clientStoreService.removeClient(transport.clientIdentifier());
     }
 }

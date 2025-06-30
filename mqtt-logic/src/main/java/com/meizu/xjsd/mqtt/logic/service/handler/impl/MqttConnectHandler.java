@@ -9,6 +9,7 @@ import com.meizu.xjsd.mqtt.logic.service.store.DupPublishMessageStoreDTO;
 import com.meizu.xjsd.mqtt.logic.service.store.IDupPublishMessageStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.ISessionStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.SessionStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
@@ -22,11 +23,12 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class MqttConnectHandler implements ConnectHandler<ITransport> {
-    private final String brokerId;
     private final IAuthService authService;
     private final ITransportLocalStoreService transportLocalStoreService;
     private final ISessionStoreService sessionStoreService;
     private final IDupPublishMessageStoreService dupPublishMessageStoreService;
+    private final IClientStoreService clientStoreService;
+    private final String brokerId;
 
 
     @SneakyThrows
@@ -67,6 +69,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
         }
         sendDupMessage(transport);
 
+        clientStoreService.putClient(transport.clientIdentifier(), brokerId);
     }
 
     private void sendDupMessage(ITransport transport) {

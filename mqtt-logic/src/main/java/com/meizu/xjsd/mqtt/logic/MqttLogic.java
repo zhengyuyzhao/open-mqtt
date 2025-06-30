@@ -7,6 +7,7 @@ import com.meizu.xjsd.mqtt.logic.service.auth.IAuthService;
 import com.meizu.xjsd.mqtt.logic.service.handler.impl.*;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
+import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import lombok.Builder;
 
@@ -25,6 +26,8 @@ public class MqttLogic {
     private final ITransportLocalStoreService transportLocalStoreService;
     private final IInternalMessageService internalMessageService;
 
+    private final IClientStoreService clientStoreService;
+
     private static ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     @Builder
@@ -32,7 +35,8 @@ public class MqttLogic {
                      IMessageIdService messageIdService, IRetainMessageStoreService retainMessageStoreService,
                      ISubscribeStoreService subscribeStoreService, ISessionStoreService sessionStoreService,
                      ITransportLocalStoreService transportLocalStoreService,
-                     IInternalMessageService internalMessageService) {
+                     IInternalMessageService internalMessageService,
+                     IClientStoreService clientStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.authService = authService;
         this.dupPublishMessageStoreService = dupPublishMessageStoreService;
@@ -42,6 +46,7 @@ public class MqttLogic {
         this.sessionStoreService = sessionStoreService;
         this.transportLocalStoreService = transportLocalStoreService;
         this.internalMessageService = internalMessageService;
+        this.clientStoreService = clientStoreService;
         dupMessageRetryScheduleService = new DupMessageRetryScheduleService(
                 mqttLogicConfig,
                 dupPublishMessageStoreService,
@@ -80,7 +85,6 @@ public class MqttLogic {
     public MqttUnSubscribeMessageHandler unSubscribe() {
         if (mqttUnSubscribeHandler == null) {
             mqttUnSubscribeHandler = new MqttUnSubscribeMessageHandler(
-                    mqttLogicConfig.getBrokerId(),
                     subscribeStoreService
             );
         }
@@ -90,7 +94,6 @@ public class MqttLogic {
     public MqttSubscribeMessageHandler subscribe() {
         if (mqttSubscribeHandler == null) {
             mqttSubscribeHandler = new MqttSubscribeMessageHandler(
-                    mqttLogicConfig.getBrokerId(),
                     subscribeStoreService,
                     retainMessageStoreService,
                     messageIdService
@@ -102,7 +105,6 @@ public class MqttLogic {
     public MqttPublishCompHandler publishComp() {
         if (mqttPublishCompHandler == null) {
             mqttPublishCompHandler = new MqttPublishCompHandler(
-                    mqttLogicConfig.getBrokerId(),
                     dupPublishMessageStoreService
             );
         }
@@ -112,7 +114,6 @@ public class MqttLogic {
     public MqttPubrecHandler pubrec() {
         if (mqttPubrecHandler == null) {
             mqttPubrecHandler = new MqttPubrecHandler(
-                    mqttLogicConfig.getBrokerId()
             );
         }
         return mqttPubrecHandler;
@@ -121,7 +122,6 @@ public class MqttLogic {
     public MqttPubrelHandler pubrel() {
         if (mqttPubrelHandler == null) {
             mqttPubrelHandler = new MqttPubrelHandler(
-                    mqttLogicConfig.getBrokerId()
             );
         }
         return mqttPubrelHandler;
@@ -130,7 +130,6 @@ public class MqttLogic {
     public MqttPublishAckHandler publishAck() {
         if (mqttPublishAckHandler == null) {
             mqttPublishAckHandler = new MqttPublishAckHandler(
-                    mqttLogicConfig.getBrokerId(),
                     dupPublishMessageStoreService
             );
         }
@@ -140,7 +139,6 @@ public class MqttLogic {
     public MqttPublishMessageHandler publish() {
         if (mqttPublishMessageHandler == null) {
             mqttPublishMessageHandler = new MqttPublishMessageHandler(
-                    mqttLogicConfig.getBrokerId(),
                     sessionStoreService,
                     internalMessageService,
                     retainMessageStoreService,
@@ -154,11 +152,12 @@ public class MqttLogic {
     public MqttConnectHandler connect() {
         if (mqttConnectHandler == null) {
             mqttConnectHandler = new MqttConnectHandler(
-                    mqttLogicConfig.getBrokerId(),
                     authService,
                     transportLocalStoreService,
                     sessionStoreService,
-                    dupPublishMessageStoreService
+                    dupPublishMessageStoreService,
+                    clientStoreService,
+                    mqttLogicConfig.getBrokerId()
             );
         }
         return mqttConnectHandler;
@@ -167,11 +166,12 @@ public class MqttLogic {
     public MqttDisConnectHandler disConnect() {
         if (mqttDisConnectHandler == null) {
             mqttDisConnectHandler = new MqttDisConnectHandler(
-                    mqttLogicConfig.getBrokerId(),
                     transportLocalStoreService,
                     sessionStoreService,
                     subscribeStoreService,
-                    internalMessageService
+                    internalMessageService,
+                    clientStoreService,
+                    mqttLogicConfig.getBrokerId()
             );
         }
         return mqttDisConnectHandler;

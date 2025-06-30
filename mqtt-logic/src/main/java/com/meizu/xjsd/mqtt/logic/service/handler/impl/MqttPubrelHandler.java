@@ -8,7 +8,6 @@ import lombok.SneakyThrows;
 
 @RequiredArgsConstructor
 public class MqttPubrelHandler implements MessageHandler<Integer> {
-    private final String brokerId;
 
 
     @SneakyThrows

@@ -10,6 +10,7 @@ import com.meizu.xjsd.mqtt.logic.config.MqttLogicConfig;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
+import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.impl.DefaultTransportLocalStoreService;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.ignite.IgniteClusterManager;
@@ -42,6 +43,9 @@ public class VertxMqttConfig {
     @Resource
     IMessageIdService messageIdService;
 
+    @Resource
+    IClientStoreService clientStoreService;
+
 
     @Bean
     public ITransportLocalStoreService transportLocalStoreService() {
@@ -53,7 +57,7 @@ public class VertxMqttConfig {
     public IInternalMessageService internalMessageService() {
         // Assuming you have a concrete implementation of IInternalMessageService
         return new VertxClusterInternalMessageService(mqttLogicConfig.getBrokerId(),
-                transportLocalStoreService(), subscribeStoreService, vertxCluster()); // Replace with actual implementation if needed
+                transportLocalStoreService(), clientStoreService, subscribeStoreService, vertxCluster()); // Replace with actual implementation if needed
     }
 
 

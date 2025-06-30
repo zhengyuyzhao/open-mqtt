@@ -51,6 +51,9 @@ public class IgniteAutoConfig {
     @Value("${spring.mqtt.broker.static-ip-addresses: [172.20.21.99:47500]}")
     private String[] staticIpAddresses;
 
+    private static final String NOT_PERSISTENCE_DATA_REGION = "not-persistence-data-region";
+    private static final String PERSISTENCE_DATA_REGION = "persistence-data-region";
+
     @Bean
     public IgniteProperties igniteProperties() {
         return new IgniteProperties();
@@ -69,11 +72,13 @@ public class IgniteAutoConfig {
         // 非持久化数据区域
         DataRegionConfiguration notPersistence = new DataRegionConfiguration().setPersistenceEnabled(false)
                 .setInitialSize(igniteProperties().getNotPersistenceInitialSize() * 1024 * 1024)
-                .setMaxSize(igniteProperties().getNotPersistenceMaxSize() * 1024 * 1024).setName("not-persistence-data-region");
+                .setMaxSize(igniteProperties().getNotPersistenceMaxSize() * 1024 * 1024)
+                .setName(NOT_PERSISTENCE_DATA_REGION);
         // 持久化数据区域
         DataRegionConfiguration persistence = new DataRegionConfiguration().setPersistenceEnabled(true)
                 .setInitialSize(igniteProperties().getPersistenceInitialSize() * 1024 * 1024)
-                .setMaxSize(igniteProperties().getPersistenceMaxSize() * 1024 * 1024).setName("persistence-data-region");
+                .setMaxSize(igniteProperties().getPersistenceMaxSize() * 1024 * 1024)
+                .setName(PERSISTENCE_DATA_REGION);
         DataStorageConfiguration dataStorageConfiguration = new DataStorageConfiguration()
                 .setDefaultDataRegionConfiguration(notPersistence)
                 .setDataRegionConfigurations(persistence)
@@ -102,7 +107,7 @@ public class IgniteAutoConfig {
     @Bean
     public IgniteCache messageIdCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
-                .setDataRegionName("not-persistence-data-region")
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setBackups(1)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
@@ -114,7 +119,7 @@ public class IgniteAutoConfig {
     public IgniteCache retainMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
-                .setDataRegionName("persistence-data-region")
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(1)
                 .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("retainMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -123,7 +128,7 @@ public class IgniteAutoConfig {
     @Bean
     public IgniteCache subscribeCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
-                .setDataRegionName("persistence-data-region")
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.REPLICATED)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
@@ -134,7 +139,7 @@ public class IgniteAutoConfig {
     @Bean
     public IgniteCache subscribeWildCardCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
-                .setDataRegionName("persistence-data-region")
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.REPLICATED)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
@@ -146,7 +151,7 @@ public class IgniteAutoConfig {
     public IgniteCache sessionCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
-                .setDataRegionName("persistence-data-region")
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(1)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
@@ -158,11 +163,23 @@ public class IgniteAutoConfig {
     public IgniteCache dupPublishMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
-                .setDataRegionName("persistence-data-region")
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(1)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("dupPublishMessageCache");
+        return ignite().getOrCreateCache(cacheConfiguration);
+    }
+
+    @Bean
+    public IgniteCache transportCache() throws Exception {
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
+                .setBackups(1)
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("transportCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 //

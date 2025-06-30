@@ -19,7 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscribeMessage> {
-    private final String brokerId;
 
     private final ISubscribeStoreService subscribeStoreService;
 
