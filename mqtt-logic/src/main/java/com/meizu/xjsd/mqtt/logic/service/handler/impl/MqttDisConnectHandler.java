@@ -27,7 +27,7 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
     @Override
     public void handle(ITransport transport) {
 
-        MqttLogic.getExecutorService().submit(() -> {
+        MqttLogic.getConnectionService().submit(() -> {
 
             try {
                 handleInner(transport);

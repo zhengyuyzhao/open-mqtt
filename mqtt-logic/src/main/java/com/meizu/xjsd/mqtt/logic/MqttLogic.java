@@ -13,6 +13,8 @@ import lombok.Builder;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ThreadFactory;
 
 public class MqttLogic {
     private final MqttLogicConfig mqttLogicConfig;
@@ -28,7 +30,9 @@ public class MqttLogic {
 
     private final IClientStoreService clientStoreService;
 
-    private static ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+    private static ExecutorService executorService;
+    private static ExecutorService connectionService;
+    private static ExecutorService publishService;
 
     @Builder
     public MqttLogic(MqttLogicConfig mqttLogicConfig, IAuthService authService, IDupPublishMessageStoreService dupPublishMessageStoreService,
@@ -52,7 +56,12 @@ public class MqttLogic {
                 dupPublishMessageStoreService,
                 transportLocalStoreService
         );
+        executorService = Executors.newVirtualThreadPerTaskExecutor();
+        connectionService = Executors.newVirtualThreadPerTaskExecutor();
+        publishService = Executors.newCachedThreadPool();
     }
+
+
 
     private DupMessageRetryScheduleService dupMessageRetryScheduleService;
 
@@ -69,14 +78,21 @@ public class MqttLogic {
     private MqttSubscribeMessageHandler mqttSubscribeHandler;
     private MqttUnSubscribeMessageHandler mqttUnSubscribeHandler;
 
+    public boolean isSessionPresent(String clientId) {
+        return sessionStoreService.containsKey(clientId);
+    }
 
     public static ExecutorService getExecutorService() {
         return executorService;
     }
 
-    public boolean isSessionPresent(String clientId) {
-        return sessionStoreService.containsKey(clientId);
+    public static ExecutorService getConnectionService() {
+        return connectionService;
     }
+    public static ExecutorService getPublishService() {
+        return publishService;
+    }
+
 
     public MqttLogicConfig getMqttLogicConfig() {
         return mqttLogicConfig;

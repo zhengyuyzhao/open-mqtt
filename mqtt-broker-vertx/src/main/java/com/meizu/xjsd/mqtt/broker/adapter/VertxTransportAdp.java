@@ -155,4 +155,9 @@ public class VertxTransportAdp implements ITransport {
     public void publishComplete(int publishMessageId) {
         mqttEndpoint.publishComplete(publishMessageId);
     }
+
+    @Override
+    public void accept(boolean sessionPresent) {
+        mqttEndpoint.accept(sessionPresent);
+    }
 }

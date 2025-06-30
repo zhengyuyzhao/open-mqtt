@@ -46,7 +46,7 @@ public class VertxMqttHandler extends VerticleBase {
             });
 
 
-            endpoint.accept(mqttLogic.isSessionPresent(endpoint.clientIdentifier()));
+//            endpoint.accept(mqttLogic.isSessionPresent(endpoint.clientIdentifier()));
 
         });
         return mqttServer.listen(mqttLogic.getMqttLogicConfig().getServerPort());

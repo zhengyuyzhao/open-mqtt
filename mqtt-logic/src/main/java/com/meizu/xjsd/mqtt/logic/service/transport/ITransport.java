@@ -69,4 +69,6 @@ public interface ITransport {
 
     void publishComplete(int publishMessageId);
 
+    void accept(boolean sessionPresent);
+
 }

@@ -73,6 +73,7 @@ public class VertxMqttConfig {
                 .subscribeStoreService(subscribeStoreService)
                 .sessionStoreService(sessionStoreService)
                 .transportLocalStoreService(transportLocalStoreService())
+                .clientStoreService(clientStoreService)
                 .internalMessageService(internalMessageService()) // Replace with actual implementation if needed
                 .build();
     }

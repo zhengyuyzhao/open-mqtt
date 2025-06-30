@@ -17,7 +17,7 @@ public class MqttPubrecHandler implements MessageHandler<Integer> {
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getExecutorService().submit(() -> {
+        MqttLogic.getPublishService().submit(() -> {
             handleInner(messageId, transport);
         });
     }
