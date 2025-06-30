@@ -4,13 +4,20 @@
 
 package com.meizu.xjsd.config;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * ignite属性配置
  */
-@ConfigurationProperties(prefix = "spring.mqtt.broker.cache")
+@Data
+@ConfigurationProperties(prefix = "spring.mqtt.store.ignite")
 public class IgniteProperties {
+	private boolean enableMulticastGroup = false;
+
+	private String multicastGroup;
+
+	private String[] staticIpAddresses;
 
 	/**
 	 * 持久化缓存内存初始化大小(MB), 默认值: 64
@@ -41,64 +48,5 @@ public class IgniteProperties {
 	 */
 	private int NotPersistenceMaxSize = 128;
 
-	public int getPersistenceInitialSize() {
-		return persistenceInitialSize;
-	}
 
-	public IgniteProperties setPersistenceInitialSize(int persistenceInitialSize) {
-		this.persistenceInitialSize = persistenceInitialSize;
-		return this;
-	}
-
-	public String getSnapshotPath() {
-		return snapshotPath;
-	}
-
-	public String getWorkPath() {
-		return workPath;
-	}
-
-	public void setWorkPath(String workPath) {
-		this.workPath = workPath;
-	}
-
-	public void setSnapshotPath(String snapshotPath) {
-		this.snapshotPath = snapshotPath;
-	}
-
-	public int getPersistenceMaxSize() {
-		return persistenceMaxSize;
-	}
-
-	public IgniteProperties setPersistenceMaxSize(int persistenceMaxSize) {
-		this.persistenceMaxSize = persistenceMaxSize;
-		return this;
-	}
-
-	public String getPersistenceStorePath() {
-		return persistenceStorePath;
-	}
-
-	public IgniteProperties setPersistenceStorePath(String persistenceStorePath) {
-		this.persistenceStorePath = persistenceStorePath;
-		return this;
-	}
-
-	public int getNotPersistenceInitialSize() {
-		return NotPersistenceInitialSize;
-	}
-
-	public IgniteProperties setNotPersistenceInitialSize(int notPersistenceInitialSize) {
-		NotPersistenceInitialSize = notPersistenceInitialSize;
-		return this;
-	}
-
-	public int getNotPersistenceMaxSize() {
-		return NotPersistenceMaxSize;
-	}
-
-	public IgniteProperties setNotPersistenceMaxSize(int notPersistenceMaxSize) {
-		NotPersistenceMaxSize = notPersistenceMaxSize;
-		return this;
-	}
 }

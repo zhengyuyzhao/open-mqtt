@@ -1,17 +1,11 @@
 package com.meizu.xjsd.config;
 
 import com.meizu.xjsd.mqtt.logic.config.MqttLogicConfig;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@Configuration
+@Data
+@ConfigurationProperties(prefix = "spring.mqtt")
 public class BrokerConfig {
-
-    @Bean
-    public MqttLogicConfig mqttLogicConfig() {
-        MqttLogicConfig config = new MqttLogicConfig();
-        // Set any necessary properties on the config object
-        // For example: config.setBrokerId("your-broker-id");
-        return config;
-    }
+    private MqttLogicConfig broker;
 }

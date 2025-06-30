@@ -26,7 +26,7 @@ public class VertxMqttConfig {
     Ignite ignite;
 
     @Resource
-    MqttLogicConfig mqttLogicConfig;
+    BrokerConfig brokerConfig;
 
     @Resource
     ISubscribeStoreService subscribeStoreService;
@@ -56,7 +56,7 @@ public class VertxMqttConfig {
     @Bean
     public IInternalMessageService internalMessageService() {
         // Assuming you have a concrete implementation of IInternalMessageService
-        return new VertxClusterInternalMessageService(mqttLogicConfig.getBrokerId(),
+        return new VertxClusterInternalMessageService(brokerConfig.getBroker().getBrokerId(),
                 transportLocalStoreService(), clientStoreService, subscribeStoreService, vertxCluster()); // Replace with actual implementation if needed
     }
 
@@ -65,7 +65,7 @@ public class VertxMqttConfig {
     @Bean
     public MqttLogic mqttLogic() {
         return MqttLogic.builder()
-                .mqttLogicConfig(mqttLogicConfig)
+                .mqttLogicConfig(brokerConfig.getBroker())
                 .authService(new DefaultMqttAuth())
                 .dupPublishMessageStoreService(dupPublishMessageStoreService)
                 .messageIdService(messageIdService)
