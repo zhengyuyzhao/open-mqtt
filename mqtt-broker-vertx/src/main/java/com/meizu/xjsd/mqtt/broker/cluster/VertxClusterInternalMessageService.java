@@ -103,7 +103,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     public void internalSubscribe(InternalMessageDTO internalMessageDTO) {
         executorService.execute(() -> {
             try {
-                if (StringUtil.isNullOrEmpty(internalMessageDTO.getToClientId())) {
+                if (!StringUtil.isNullOrEmpty(internalMessageDTO.getToClientId())) {
                     ITransport transport = transportLocalStoreService.getTransport(internalMessageDTO.getToClientId());
                     if (transport != null) {
                         log.info("Transport Topic:{} to clientId: {}", internalMessageDTO.getTopic(),
