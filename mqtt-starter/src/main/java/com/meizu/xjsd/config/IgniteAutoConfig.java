@@ -127,6 +127,7 @@ public class IgniteAutoConfig {
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setBackups(1)
+                .setReadFromBackup(true)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("messageIdCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -138,7 +139,10 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(1)
-                .setCacheMode(CacheMode.PARTITIONED).setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL).setName("retainMessageCache");
+                .setReadFromBackup(true)
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("retainMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
@@ -170,6 +174,7 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(1)
+                .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("sessionCache");
@@ -182,6 +187,7 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(1)
+                .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("dupPublishMessageCache");
