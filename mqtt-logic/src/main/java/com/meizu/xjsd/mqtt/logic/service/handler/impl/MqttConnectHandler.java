@@ -59,6 +59,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
         transportLocalStoreService.putTransport(transport.clientIdentifier(), transport);
         SessionStoreDTO sessionStoreDTO = sessionStoreService.get(transport.clientIdentifier());
         transport.accept(sessionStoreDTO != null);
+
         if (transport.isCleanSession() || sessionStoreDTO == null) {
             sessionStoreDTO = SessionStoreDTO.builder()
                     .clientId(transport.clientIdentifier())
@@ -68,7 +69,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
                     .build();
             sessionStoreService.put(transport.clientIdentifier(), sessionStoreDTO);
         }
-        sendDupMessage(transport);
+//        sendDupMessage(transport);
 
         clientStoreService.putClient(transport.clientIdentifier(), brokerId);
 

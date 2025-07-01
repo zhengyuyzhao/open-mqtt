@@ -13,8 +13,6 @@ import lombok.Builder;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ThreadFactory;
 
 public class MqttLogic {
     private final MqttLogicConfig mqttLogicConfig;
@@ -62,7 +60,6 @@ public class MqttLogic {
     }
 
 
-
     private DupMessageRetryScheduleService dupMessageRetryScheduleService;
 
     private MqttConnectHandler mqttConnectHandler;
@@ -89,6 +86,7 @@ public class MqttLogic {
     public static ExecutorService getConnectionService() {
         return connectionService;
     }
+
     public static ExecutorService getPublishService() {
         return publishService;
     }
