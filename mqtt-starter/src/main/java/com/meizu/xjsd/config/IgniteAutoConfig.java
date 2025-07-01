@@ -12,6 +12,8 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cluster.ClusterNode;
+import org.apache.ignite.cluster.ClusterState;
 import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.configuration.DataRegionConfiguration;
 import org.apache.ignite.configuration.DataStorageConfiguration;
@@ -29,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.cache.expiry.AccessedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * 自动配置apache ignite
@@ -103,7 +106,18 @@ public class IgniteAutoConfig {
         }
         igniteConfiguration.setDiscoverySpi(tcpDiscoverySpi);
         Ignite ignite = Ignition.start(igniteConfiguration);
-        ignite.cluster().active(true);
+        ignite.cluster().state(ClusterState.ACTIVE);
+//        Collection<ClusterNode> dataNodes = ignite.cluster().forServers().nodes();
+//        dataNodes.stream().forEach(node -> {
+//            log.info("Ignite node: {} with ID: {}", node.addresses(), node.id());
+//        });
+        ignite.cluster().baselineAutoAdjustEnabled(true);
+        ignite.cluster().baselineAutoAdjustTimeout(60000);
+        // 设置新的基线拓扑
+//        ignite.cluster().setBaselineTopology(dataNodes);
+
+
+
         return ignite;
     }
 
