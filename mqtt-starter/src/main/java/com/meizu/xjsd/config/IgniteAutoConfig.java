@@ -30,8 +30,14 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.cache.expiry.AccessedExpiryPolicy;
 import javax.cache.expiry.Duration;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static io.vertx.core.impl.SysProps.FILE_CACHE_DIR;
 
 /**
  * 自动配置apache ignite
@@ -105,20 +111,36 @@ public class IgniteAutoConfig {
             tcpDiscoverySpi.setIpFinder(tcpDiscoveryVmIpFinder);
         }
         igniteConfiguration.setDiscoverySpi(tcpDiscoverySpi);
+        cleanVertxClusterCache();
         Ignite ignite = Ignition.start(igniteConfiguration);
         ignite.cluster().state(ClusterState.ACTIVE);
-//        Collection<ClusterNode> dataNodes = ignite.cluster().forServers().nodes();
-//        dataNodes.stream().forEach(node -> {
-//            log.info("Ignite node: {} with ID: {}", node.addresses(), node.id());
-//        });
-        ignite.cluster().baselineAutoAdjustEnabled(true);
-        ignite.cluster().baselineAutoAdjustTimeout(60000);
+        Collection<ClusterNode> dataNodes = ignite.cluster().forServers().nodes();
+        dataNodes.stream().forEach(node -> {
+            log.info("Ignite node: {} with ID: {}", node.addresses(), node.id());
+        });
+        ignite.cluster().baselineAutoAdjustEnabled(false);
         // 设置新的基线拓扑
-//        ignite.cluster().setBaselineTopology(dataNodes);
-
+        ignite.cluster().setBaselineTopology(dataNodes);
+        ignite.cluster().baselineAutoAdjustEnabled(true);
+//        ignite.cluster().baselineAutoAdjustTimeout(20000);
 
 
         return ignite;
+    }
+
+    private static void cleanVertxClusterCache() throws IOException {
+        String tmpDir = System.getProperty("java.io.tmpdir", ".");
+        File tmpFile = new File(tmpDir);
+        Files.list(tmpFile.toPath())
+                .filter(path -> path.toString().contains("vertx-cache"))
+                .forEachOrdered(path -> {
+                    log.info("Deleting vertx cluster cache file: {}", path);
+                    try {
+                        Files.deleteIfExists(path);
+                    } catch (Exception e) {
+                        log.error("Failed to delete vertx cluster cache file: {}", path, e);
+                    }
+                });
     }
 
     @Bean

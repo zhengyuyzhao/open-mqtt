@@ -39,7 +39,7 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
     }
 
     private void handleSubscribe(IMqttSubscribeMessage event, ITransport transport) {
-        try {
+
             List<MqttTopicSubscription> topicSubscriptions = event.topicSubscriptions();
             if (this.validTopicFilter(topicSubscriptions)) {
                 String clientId = transport.clientIdentifier();
@@ -65,9 +65,7 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
                 ).toList();
                 transport.subscribeAcknowledge(event.messageId(), subAckRCS, event.properties());
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
     }
 
     private boolean validTopicFilter(List<MqttTopicSubscription> topicSubscriptions) {

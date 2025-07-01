@@ -60,8 +60,11 @@ public class DupMessageRetryScheduleService {
     private void sendDupMessage(ITransport transport) {
         // 发送重复发布的消息
         List<DupPublishMessageStoreDTO> messages = dupPublishMessageStoreService.get(transport.clientIdentifier());
+        log.info("Retrying duplicate publish messages for transport: {}, messages: {}", transport.clientIdentifier(), messages);
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
+                log.info("Sending duplicate message: {}, topic: {}, qos: {}, messageId: {}",
+                        message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
                 transport.publish(message.getTopic(), message.getMessageBytes(),
                         MqttQoS.valueOf(message.getMqttQoS()), true, false, message.getMessageId());
             });

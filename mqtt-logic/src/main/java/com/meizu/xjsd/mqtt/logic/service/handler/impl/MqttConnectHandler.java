@@ -53,8 +53,12 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
         }
         ITransport existingTransport = transportLocalStoreService.getTransport(transport.clientIdentifier());
         if (existingTransport != null) {
-            transportLocalStoreService.removeTransport(existingTransport.clientIdentifier());
-            existingTransport.close();
+            try {
+                transportLocalStoreService.removeTransport(existingTransport.clientIdentifier());
+                existingTransport.close();
+            } catch (Exception e) {
+                log.error("Error closing existing transport for clientId: {}", transport.clientIdentifier(), e);
+            }
         }
         transportLocalStoreService.putTransport(transport.clientIdentifier(), transport);
         SessionStoreDTO sessionStoreDTO = sessionStoreService.get(transport.clientIdentifier());
