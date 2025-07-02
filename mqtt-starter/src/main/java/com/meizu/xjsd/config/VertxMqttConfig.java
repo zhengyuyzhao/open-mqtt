@@ -18,6 +18,7 @@ import jakarta.annotation.Resource;
 import org.apache.ignite.Ignite;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
 @Configuration
 public class VertxMqttConfig {
@@ -79,6 +80,7 @@ public class VertxMqttConfig {
     }
 
     @Bean
+    @DependsOn({"ignite", "vertxNodeInfo", "vertxSubs"})
     public ClusterManager clusterManager() {
         // Assuming you have a concrete implementation of ClusterManager
         // This is a placeholder, replace with actual cluster manager initialization

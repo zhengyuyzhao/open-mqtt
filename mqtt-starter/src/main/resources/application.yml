@@ -4,7 +4,7 @@ spring:
       brokerId: mqtt-broker-1
     store:
       ignite:
-        static-ip-addresses: 172.20.17.27:47500..47509
+        static-ip-addresses: 127.0.0.1:47500..47509
         persistenceStorePath: /data/ignite/store
 logging:
   level:

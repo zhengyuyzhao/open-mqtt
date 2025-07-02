@@ -12,6 +12,7 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.PartitionLossPolicy;
 import org.apache.ignite.cluster.ClusterNode;
 import org.apache.ignite.cluster.ClusterState;
 import org.apache.ignite.configuration.CacheConfiguration;
@@ -38,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static io.vertx.core.impl.SysProps.FILE_CACHE_DIR;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 
 /**
  * 自动配置apache ignite
@@ -122,7 +124,7 @@ public class IgniteAutoConfig {
         // 设置新的基线拓扑
         ignite.cluster().setBaselineTopology(dataNodes);
         ignite.cluster().baselineAutoAdjustEnabled(true);
-//        ignite.cluster().baselineAutoAdjustTimeout(20000);
+        ignite.cluster().baselineAutoAdjustTimeout(20000);
 
 
         return ignite;
@@ -151,6 +153,7 @@ public class IgniteAutoConfig {
                 .setBackups(1)
                 .setReadFromBackup(true)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setName("messageIdCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -163,6 +166,7 @@ public class IgniteAutoConfig {
                 .setBackups(1)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("retainMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -174,6 +178,7 @@ public class IgniteAutoConfig {
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.REPLICATED)
+                .setWriteSynchronizationMode(FULL_SYNC)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("subscribeCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -185,6 +190,7 @@ public class IgniteAutoConfig {
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.REPLICATED)
+                .setWriteSynchronizationMode(FULL_SYNC)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("subscribeWildCardCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -198,6 +204,7 @@ public class IgniteAutoConfig {
                 .setBackups(1)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("sessionCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -211,6 +218,7 @@ public class IgniteAutoConfig {
                 .setBackups(1)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("dupPublishMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -223,9 +231,34 @@ public class IgniteAutoConfig {
                 .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setBackups(1)
 //                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("transportCache");
+        return ignite().getOrCreateCache(cacheConfiguration);
+    }
+
+    @Bean
+    public IgniteCache vertxNodeInfo() throws Exception {
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
+                .setReadFromBackup(true)
+                .setCacheMode(CacheMode.REPLICATED)
+                .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+                .setWriteSynchronizationMode(FULL_SYNC)
+                .setName("__vertx.nodeInfo");
+        return ignite().getOrCreateCache(cacheConfiguration);
+    }
+
+    @Bean
+    public IgniteCache vertxSubs() throws Exception {
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
+                .setReadFromBackup(true)
+                .setCacheMode(CacheMode.REPLICATED)
+                .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+                .setWriteSynchronizationMode(FULL_SYNC)
+                .setName("__vertx.subs");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 //
