@@ -57,7 +57,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
                 transportLocalStoreService.removeTransport(existingTransport.clientIdentifier());
                 existingTransport.close();
             } catch (Exception e) {
-                log.error("Error closing existing transport for clientId: {}", transport.clientIdentifier(), e);
+                log.error("Error closing existing transport for clientId: {}", transport.clientIdentifier());
             }
         }
         SessionStoreDTO sessionStoreDTO = sessionStoreService.get(transport.clientIdentifier());
