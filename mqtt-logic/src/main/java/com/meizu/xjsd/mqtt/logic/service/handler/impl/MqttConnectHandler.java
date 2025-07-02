@@ -60,9 +60,9 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
                 log.error("Error closing existing transport for clientId: {}", transport.clientIdentifier(), e);
             }
         }
-        transportLocalStoreService.putTransport(transport.clientIdentifier(), transport);
         SessionStoreDTO sessionStoreDTO = sessionStoreService.get(transport.clientIdentifier());
         transport.accept(sessionStoreDTO != null);
+
 
         if (transport.isCleanSession() || sessionStoreDTO == null) {
             sessionStoreDTO = SessionStoreDTO.builder()
@@ -76,7 +76,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
 //        sendDupMessage(transport);
 
         clientStoreService.putClient(transport.clientIdentifier(), brokerId);
-
+        transportLocalStoreService.putTransport(transport.clientIdentifier(), transport);
 
     }
 

@@ -179,6 +179,7 @@ public class IgniteAutoConfig {
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.REPLICATED)
                 .setWriteSynchronizationMode(FULL_SYNC)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("subscribeCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -191,6 +192,7 @@ public class IgniteAutoConfig {
                 .setReadFromBackup(true)
                 .setCacheMode(CacheMode.REPLICATED)
                 .setWriteSynchronizationMode(FULL_SYNC)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("subscribeWildCardCache");
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -246,6 +248,7 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.REPLICATED)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
                 .setWriteSynchronizationMode(FULL_SYNC)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setName("__vertx.nodeInfo");
         log.info("Creating Vertx node info cache with configuration: {}", cacheConfiguration);
         return ignite().getOrCreateCache(cacheConfiguration);
@@ -259,6 +262,7 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.REPLICATED)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
                 .setWriteSynchronizationMode(FULL_SYNC)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setName("__vertx.subs");
         log.info("Creating Vertx subscriptions cache with configuration: {}", cacheConfiguration);
         return ignite().getOrCreateCache(cacheConfiguration);
