@@ -15,11 +15,13 @@ import com.meizu.xjsd.mqtt.logic.service.transport.impl.DefaultTransportLocalSto
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.ignite.IgniteClusterManager;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.Ignite;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
+@Slf4j
 @Configuration
 public class VertxMqttConfig {
 
@@ -84,6 +86,7 @@ public class VertxMqttConfig {
     public ClusterManager clusterManager() {
         // Assuming you have a concrete implementation of ClusterManager
         // This is a placeholder, replace with actual cluster manager initialization
+        log.info("Initializing IgniteClusterManager with Ignite instance: {}", ignite.name());
         return new IgniteClusterManager(ignite);
     }
 

@@ -113,16 +113,16 @@ public class IgniteAutoConfig {
             tcpDiscoverySpi.setIpFinder(tcpDiscoveryVmIpFinder);
         }
         igniteConfiguration.setDiscoverySpi(tcpDiscoverySpi);
-        cleanVertxClusterCache();
+//        cleanVertxClusterCache();
         Ignite ignite = Ignition.start(igniteConfiguration);
         ignite.cluster().state(ClusterState.ACTIVE);
-        Collection<ClusterNode> dataNodes = ignite.cluster().forServers().nodes();
-        dataNodes.stream().forEach(node -> {
-            log.info("Ignite node: {} with ID: {}", node.addresses(), node.id());
-        });
-        ignite.cluster().baselineAutoAdjustEnabled(false);
-        // 设置新的基线拓扑
-        ignite.cluster().setBaselineTopology(dataNodes);
+//        Collection<ClusterNode> dataNodes = ignite.cluster().forServers().nodes();
+//        dataNodes.stream().forEach(node -> {
+//            log.info("Ignite node: {} with ID: {}", node.addresses(), node.id());
+//        });
+//        ignite.cluster().baselineAutoAdjustEnabled(false);
+//        // 设置新的基线拓扑
+//        ignite.cluster().setBaselineTopology(dataNodes);
         ignite.cluster().baselineAutoAdjustEnabled(true);
         ignite.cluster().baselineAutoAdjustTimeout(20000);
 
@@ -247,6 +247,7 @@ public class IgniteAutoConfig {
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
                 .setWriteSynchronizationMode(FULL_SYNC)
                 .setName("__vertx.nodeInfo");
+        log.info("Creating Vertx node info cache with configuration: {}", cacheConfiguration);
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
@@ -259,6 +260,7 @@ public class IgniteAutoConfig {
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
                 .setWriteSynchronizationMode(FULL_SYNC)
                 .setName("__vertx.subs");
+        log.info("Creating Vertx subscriptions cache with configuration: {}", cacheConfiguration);
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 //
