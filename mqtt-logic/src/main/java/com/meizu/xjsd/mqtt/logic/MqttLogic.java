@@ -73,7 +73,7 @@ public class MqttLogic {
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();
         connectionService = Executors.newVirtualThreadPerTaskExecutor();
-        publishService = Executors.newCachedThreadPool();
+        publishService = Executors.newVirtualThreadPerTaskExecutor();
     }
 
 
