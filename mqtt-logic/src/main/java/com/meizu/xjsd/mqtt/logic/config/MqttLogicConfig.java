@@ -8,8 +8,8 @@ import lombok.ToString;
 public class MqttLogicConfig {
     private String brokerId = "default-broker";
     private int dupMessageRetryThreadPoolSize = 10;
-    private int dupMessageRetryDelay = 10;
-    private int dupMessageRetryInitialDelay = 10;
+    private int dupMessageRetryDelay = 2;
+    private int dupMessageRetryInitialDelay = 2;
     private int dupMessageRetryMaxTimes = 3;
     private int serverPort = 1883;
 }

@@ -22,9 +22,6 @@ public class InternalMessageDTO implements Serializable {
 
     private static final long serialVersionUID = -1L;
 
-    //当前频道clientId
-    private String clientId;
-
     private String topic;
 
     private int mqttQoS;
@@ -36,6 +33,8 @@ public class InternalMessageDTO implements Serializable {
     private boolean dup;
 
     private String toClientId;
+
+    private int messageId;
 
 
 }

@@ -1,27 +1,28 @@
 package com.meizu.xjsd.mqtt.store.memory;
 
-import com.meizu.xjsd.mqtt.logic.service.store.DupPublishMessageStoreDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.IDupPublishMessageStoreService;
+import com.meizu.xjsd.mqtt.logic.service.store.IServerPublishMessageStoreService;
+import com.meizu.xjsd.mqtt.logic.service.store.ServerPublishMessageStoreDTO;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class MemDupPublishMessageStoreService implements IDupPublishMessageStoreService {
-    private ConcurrentHashMap<String, List<DupPublishMessageStoreDTO>> store = new ConcurrentHashMap<>();
+public class MemDupPublishMessageStoreService implements IServerPublishMessageStoreService<ServerPublishMessageStoreDTO> {
+    private ConcurrentHashMap<String, List<ServerPublishMessageStoreDTO>> store = new ConcurrentHashMap<>();
 
     @Override
-    public void put(String clientId, DupPublishMessageStoreDTO dupPublishMessageStoreDTO) {
+    public void put(String clientId, ServerPublishMessageStoreDTO dupPublishMessageStoreDTO) {
         store.computeIfAbsent(clientId, k -> new java.util.ArrayList<>()).add(dupPublishMessageStoreDTO);
     }
 
-    @Override
-    public void put(String clientId, DupPublishMessageStoreDTO dupPublishMessageStoreDTO, int expire) {
-        store.computeIfAbsent(clientId, k -> new java.util.ArrayList<>()).add(dupPublishMessageStoreDTO);
-    }
 
     @Override
-    public List<DupPublishMessageStoreDTO> get(String clientId) {
+    public List<ServerPublishMessageStoreDTO> get(String clientId) {
         return store.get(clientId);
+    }
+
+    @Override
+    public ServerPublishMessageStoreDTO get(String clientId, int messageId) {
+        return null;
     }
 
     @Override

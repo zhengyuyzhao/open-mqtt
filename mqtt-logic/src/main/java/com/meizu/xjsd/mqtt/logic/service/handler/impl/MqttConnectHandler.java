@@ -5,8 +5,8 @@ import com.meizu.xjsd.mqtt.logic.entity.IMqttAuth;
 import com.meizu.xjsd.mqtt.logic.entity.MqttWill;
 import com.meizu.xjsd.mqtt.logic.service.auth.IAuthService;
 import com.meizu.xjsd.mqtt.logic.service.handler.ConnectHandler;
-import com.meizu.xjsd.mqtt.logic.service.store.DupPublishMessageStoreDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.IDupPublishMessageStoreService;
+import com.meizu.xjsd.mqtt.logic.service.store.ClientPublishMessageStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.store.IServerPublishMessageStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.ISessionStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.SessionStoreDTO;
 import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
@@ -26,7 +26,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
     private final IAuthService authService;
     private final ITransportLocalStoreService transportLocalStoreService;
     private final ISessionStoreService sessionStoreService;
-    private final IDupPublishMessageStoreService dupPublishMessageStoreService;
+    private final IServerPublishMessageStoreService dupPublishMessageStoreService;
     private final IClientStoreService clientStoreService;
     private final String brokerId;
 
@@ -82,7 +82,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
 
     private void sendDupMessage(ITransport transport) {
         // 发送重复发布的消息
-        List<DupPublishMessageStoreDTO> messages = dupPublishMessageStoreService.get(transport.clientIdentifier());
+        List<ClientPublishMessageStoreDTO> messages = dupPublishMessageStoreService.get(transport.clientIdentifier());
         log.info("Sending duplicate messages for clientId: {}, messages: {}", transport.clientIdentifier(), messages);
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {

@@ -3,11 +3,10 @@ package com.meizu.xjsd.mqtt.logic.service.handler.impl;
 import cn.hutool.core.util.StrUtil;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import com.meizu.xjsd.mqtt.logic.service.handler.DisConnectHandler;
+import com.meizu.xjsd.mqtt.logic.service.internal.CompositePublishService;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.ISessionStoreService;
-import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
-import com.meizu.xjsd.mqtt.logic.service.store.SessionStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -19,9 +18,8 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
     private final ITransportLocalStoreService transportLocalStoreService;
     private final ISessionStoreService sessionStoreService;
     private final ISubscribeStoreService subscribeStoreService;
-    private final IInternalMessageService internalMessageService;
     private final IClientStoreService clientStoreService;
-    private final String brokerId;
+    private final CompositePublishService compositePublishService;
 
     @SneakyThrows
     @Override
@@ -44,15 +42,20 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
         if (sessionStoreDTO != null) {
             // 发送遗嘱消息
             if (sessionStoreDTO.getWillMessage() != null && StrUtil.isNotEmpty(sessionStoreDTO.getWillMessage().getWillTopic())) {
-                InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
-                        .topic(sessionStoreDTO.getWillMessage().getWillTopic())
-                        .mqttQoS(sessionStoreDTO.getWillMessage().getWillQos())
-                        .messageBytes(sessionStoreDTO.getWillMessage().getWillMessageBytes())
-                        .dup(false)
-                        .retain(sessionStoreDTO.getWillMessage().isWillRetain())
-                        .clientId(transport.clientIdentifier())
-                        .build();
-                internalMessageService.internalPublish(internalMessageDTO);
+
+                ServerPublishMessageStoreDTO serverPublishMessageStoreDTO =
+                        ServerPublishMessageStoreDTO.builder()
+                                .clientId(transport.clientIdentifier())
+                                .messageBytes(sessionStoreDTO.getWillMessage().getWillMessageBytes())
+                                .mqttQoS(sessionStoreDTO.getWillMessage().getWillQos())
+                                .topic(sessionStoreDTO.getWillMessage().getWillTopic())
+                                .createTime(System.currentTimeMillis())
+                                .build();
+
+                compositePublishService.storeServerPublishMessageAndSendDirect(
+                        serverPublishMessageStoreDTO
+                );
+
             }
 
             // 如果是清除会话，则删除会话

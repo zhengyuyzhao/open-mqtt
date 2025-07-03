@@ -1,34 +1,30 @@
 package com.meizu.xjsd.mqtt.store.memory;
 
-import com.meizu.xjsd.mqtt.logic.service.store.DupPublishMessageStoreDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.IDupPublishMessageStoreService;
+import com.meizu.xjsd.mqtt.logic.service.store.ClientPublishMessageStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.store.IClientPublishMessageStoreService;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteTransactions;
-import org.apache.ignite.cache.CacheAtomicityMode;
-import org.apache.ignite.cache.CacheMode;
-import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.ignite.transactions.Transaction;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Builder
 @RequiredArgsConstructor
-public class IgniteDupPublishMessageStoreService implements IDupPublishMessageStoreService {
+public class IgniteClientPublishMessageStoreService implements IClientPublishMessageStoreService<ClientPublishMessageStoreDTO> {
     private final Ignite ignite;
-    private final IgniteCache<String, Map<Integer, DupPublishMessageStoreDTO>> store;
+    private final IgniteCache<String, Map<Integer, ClientPublishMessageStoreDTO>> store;
 
     @Override
-    public void put(String clientId, DupPublishMessageStoreDTO dupPublishMessageStoreDTO) {
+    public void put(String clientId, ClientPublishMessageStoreDTO dupPublishMessageStoreDTO) {
         IgniteTransactions transactions = ignite.transactions();
         try (Transaction tx = transactions.txStart()) {
-            Map<Integer, DupPublishMessageStoreDTO> map = store.get(clientId);
+            Map<Integer, ClientPublishMessageStoreDTO> map = store.get(clientId);
             if (map == null) {
                 map = new HashMap<>();
             }
@@ -39,21 +35,22 @@ public class IgniteDupPublishMessageStoreService implements IDupPublishMessageSt
         }
     }
 
-    @Override
-    public void put(String clientId, DupPublishMessageStoreDTO dupPublishMessageStoreDTO, int expire) {
-        put(clientId, dupPublishMessageStoreDTO);
-    }
+
+//    @Override
+//    public List<ClientPublishMessageStoreDTO> get(String clientId) {
+//        return Optional.ofNullable(store.get(clientId)).orElse(new HashMap<>()).values().stream().toList();
+//    }
 
     @Override
-    public List<DupPublishMessageStoreDTO> get(String clientId) {
-        return Optional.ofNullable(store.get(clientId)).orElse(new HashMap<>()).values().stream().toList();
+    public ClientPublishMessageStoreDTO get(String clientId, int messageId) {
+        return Optional.ofNullable(store.get(clientId)).orElse(new HashMap<>()).get(messageId);
     }
 
     @Override
     public void remove(String clientId, int messageId) {
         IgniteTransactions transactions = ignite.transactions();
         try (Transaction tx = transactions.txStart()) {
-            Map<Integer, DupPublishMessageStoreDTO> map = store.get(clientId);
+            Map<Integer, ClientPublishMessageStoreDTO> map = store.get(clientId);
             if (map != null) {
                 map.remove(messageId);
                 store.put(clientId, map);

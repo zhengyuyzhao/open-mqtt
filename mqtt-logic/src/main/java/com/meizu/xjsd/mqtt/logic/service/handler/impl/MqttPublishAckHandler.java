@@ -3,14 +3,16 @@ package com.meizu.xjsd.mqtt.logic.service.handler.impl;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import com.meizu.xjsd.mqtt.logic.entity.IMqttPubAckMessage;
 import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
-import com.meizu.xjsd.mqtt.logic.service.store.IDupPublishMessageStoreService;
+import com.meizu.xjsd.mqtt.logic.service.store.IServerPublishMessageStoreService;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage> {
-    private final IDupPublishMessageStoreService dupPublishMessageStoreService;
+    private final IServerPublishMessageStoreService serverPublishMessageStoreService;
 
 
     @SneakyThrows
@@ -26,7 +28,8 @@ public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage>
     }
 
     private void handleInner(IMqttPubAckMessage event, ITransport transport) {
-        dupPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
+        log.debug("Handling MQTT PubAck Message: {}", event.messageId());
+        serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
     }
 
 

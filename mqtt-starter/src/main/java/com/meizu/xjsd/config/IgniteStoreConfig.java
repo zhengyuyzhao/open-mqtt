@@ -9,7 +9,6 @@ import org.apache.ignite.IgniteCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
 import java.util.Map;
 
 @Configuration
@@ -21,8 +20,11 @@ public class IgniteStoreConfig {
     @Resource(name = "messageIdCache")
     IgniteCache<String, Long> messageIdCache;
 
-    @Resource(name = "dupPublishMessageCache")
-    IgniteCache<String, Map<Integer, DupPublishMessageStoreDTO>> dupPublishMessageCache;
+    @Resource(name = "serverPublishMessageCache")
+    IgniteCache<String, Map<Integer, ServerPublishMessageStoreDTO>> serverPublishMessageCache;
+
+    @Resource(name = "clientPublishMessageCache")
+    IgniteCache<String, Map<Integer, ClientPublishMessageStoreDTO>> clientPublishMessageCache;
 
 
     @Resource(name = "retainMessageCache")
@@ -41,11 +43,20 @@ public class IgniteStoreConfig {
     IgniteCache<String, String> transportCache;
 
     @Bean
-    public IDupPublishMessageStoreService dupPublishMessageStoreService() {
+    public IServerPublishMessageStoreService serverPublishMessageStoreService() {
         // Assuming you have a concrete implementation of IDupPublishMessageStoreService
-        return new IgniteDupPublishMessageStoreService(
+        return new IgniteServerPublishMessageStoreService(
                 ignite,
-                dupPublishMessageCache
+                serverPublishMessageCache
+        );
+    }
+
+    @Bean
+    public IClientPublishMessageStoreService clientPublishMessageStoreService() {
+        // Assuming you have a concrete implementation of IDupPublishMessageStoreService
+        return new IgniteClientPublishMessageStoreService(
+                ignite,
+                clientPublishMessageCache
         );
     }
 

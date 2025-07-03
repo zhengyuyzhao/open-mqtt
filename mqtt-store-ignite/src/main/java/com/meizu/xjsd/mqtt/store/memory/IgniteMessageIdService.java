@@ -15,11 +15,11 @@ public class IgniteMessageIdService implements IMessageIdService {
     @Override
     public int getNextMessageId(String clientId) {
         IgniteTransactions transactions = ignite.transactions();
-        Long count = 0l;
+        Long count = 1l;
         try (Transaction tx = transactions.txStart()) {
             count = cache.get(clientId);
             if (count == null) {
-                count = 0L;
+                count = 1L;
             }
             cache.put(clientId, count + 1);
             tx.commit();

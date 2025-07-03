@@ -6,7 +6,6 @@ import com.meizu.xjsd.mqtt.broker.cluster.VertxCluster;
 import com.meizu.xjsd.mqtt.broker.cluster.VertxClusterInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.MqttBroker;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
-import com.meizu.xjsd.mqtt.logic.config.MqttLogicConfig;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -38,7 +37,10 @@ public class VertxMqttConfig {
     IRetainMessageStoreService retainMessageStoreService;
 
     @Resource
-    IDupPublishMessageStoreService dupPublishMessageStoreService;
+    IServerPublishMessageStoreService serverPublishMessageStoreService;
+
+    @Resource
+    IClientPublishMessageStoreService clientPublishMessageStoreService;
 
     @Resource
     ISessionStoreService sessionStoreService;
@@ -70,7 +72,8 @@ public class VertxMqttConfig {
         return MqttLogic.builder()
                 .mqttLogicConfig(brokerConfig.getBroker())
                 .authService(new DefaultMqttAuth())
-                .dupPublishMessageStoreService(dupPublishMessageStoreService)
+                .serverPublishMessageStoreService(serverPublishMessageStoreService)
+                .clientPublishMessageStoreService(clientPublishMessageStoreService)
                 .messageIdService(messageIdService)
                 .retainMessageStoreService(retainMessageStoreService)
                 .subscribeStoreService(subscribeStoreService)

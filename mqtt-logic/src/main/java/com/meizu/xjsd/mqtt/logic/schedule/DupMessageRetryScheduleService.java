@@ -2,8 +2,9 @@ package com.meizu.xjsd.mqtt.logic.schedule;
 
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.meizu.xjsd.mqtt.logic.config.MqttLogicConfig;
-import com.meizu.xjsd.mqtt.logic.service.store.DupPublishMessageStoreDTO;
-import com.meizu.xjsd.mqtt.logic.service.store.IDupPublishMessageStoreService;
+import com.meizu.xjsd.mqtt.logic.service.store.ClientPublishMessageStoreDTO;
+import com.meizu.xjsd.mqtt.logic.service.store.IServerPublishMessageStoreService;
+import com.meizu.xjsd.mqtt.logic.service.store.ServerPublishMessageStoreDTO;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransportLocalStoreService;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -18,15 +19,17 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class DupMessageRetryScheduleService {
     private final MqttLogicConfig mqttLogicConfig;
-    private final IDupPublishMessageStoreService dupPublishMessageStoreService;
+    private final IServerPublishMessageStoreService serverPublishMessageStoreService;
     private final ITransportLocalStoreService transportLocalStoreService;
 
 
     private final ScheduledExecutorService scheduledExecutorService;
 
-    public DupMessageRetryScheduleService(MqttLogicConfig mqttLogicConfig, IDupPublishMessageStoreService dupPublishMessageStoreService, ITransportLocalStoreService transportLocalStoreService) {
+    public DupMessageRetryScheduleService(MqttLogicConfig mqttLogicConfig,
+                                          IServerPublishMessageStoreService serverPublishMessageStoreService,
+                                          ITransportLocalStoreService transportLocalStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
-        this.dupPublishMessageStoreService = dupPublishMessageStoreService;
+        this.serverPublishMessageStoreService = serverPublishMessageStoreService;
         this.transportLocalStoreService = transportLocalStoreService;
         this.scheduledExecutorService = new ScheduledThreadPoolExecutor(
                 mqttLogicConfig.getDupMessageRetryThreadPoolSize(),
@@ -68,10 +71,14 @@ public class DupMessageRetryScheduleService {
 
     private void sendDupMessage(ITransport transport) {
         // 发送重复发布的消息
-        List<DupPublishMessageStoreDTO> messages = dupPublishMessageStoreService.get(transport.clientIdentifier());
+        List<ServerPublishMessageStoreDTO> messages = serverPublishMessageStoreService.get(transport.clientIdentifier());
         log.debug("Retrying duplicate publish messages for transport: {}, messages: {}", transport.clientIdentifier(), messages);
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
+                if (System.currentTimeMillis() - message.getCreateTime() < 5 * 1000) {
+                    return;
+                }
+
                 log.debug("Sending duplicate message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
                 transport.publish(message.getTopic(), message.getMessageBytes(),

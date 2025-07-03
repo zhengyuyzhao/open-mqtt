@@ -213,7 +213,7 @@ public class IgniteAutoConfig {
     }
 
     @Bean
-    public IgniteCache dupPublishMessageCache() throws Exception {
+    public IgniteCache serverPublishMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
@@ -222,7 +222,21 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
-                .setName("dupPublishMessageCache");
+                .setName("serverPublishMessageCache");
+        return ignite().getOrCreateCache(cacheConfiguration);
+    }
+
+    @Bean
+    public IgniteCache clientPublishMessageCache() throws Exception {
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
+                .setBackups(2)
+                .setReadFromBackup(true)
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("clientPublishMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 

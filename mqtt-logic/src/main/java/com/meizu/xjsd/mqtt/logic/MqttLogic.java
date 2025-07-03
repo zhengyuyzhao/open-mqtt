@@ -5,6 +5,7 @@ import com.meizu.xjsd.mqtt.logic.config.MqttLogicConfig;
 import com.meizu.xjsd.mqtt.logic.schedule.DupMessageRetryScheduleService;
 import com.meizu.xjsd.mqtt.logic.service.auth.IAuthService;
 import com.meizu.xjsd.mqtt.logic.service.handler.impl.*;
+import com.meizu.xjsd.mqtt.logic.service.internal.CompositePublishService;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.store.*;
 import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
@@ -18,7 +19,9 @@ public class MqttLogic {
     private final MqttLogicConfig mqttLogicConfig;
 
     private final IAuthService authService;
-    private final IDupPublishMessageStoreService dupPublishMessageStoreService;
+    private final IServerPublishMessageStoreService serverPublishMessageStoreService;
+
+    private final IClientPublishMessageStoreService clientPublishMessageStoreService;
     private final IMessageIdService messageIdService;
     private final IRetainMessageStoreService retainMessageStoreService;
     private final ISubscribeStoreService subscribeStoreService;
@@ -28,20 +31,26 @@ public class MqttLogic {
 
     private final IClientStoreService clientStoreService;
 
+    private final CompositePublishService compositePublishService;
+
     private static ExecutorService executorService;
     private static ExecutorService connectionService;
     private static ExecutorService publishService;
 
     @Builder
-    public MqttLogic(MqttLogicConfig mqttLogicConfig, IAuthService authService, IDupPublishMessageStoreService dupPublishMessageStoreService,
-                     IMessageIdService messageIdService, IRetainMessageStoreService retainMessageStoreService,
-                     ISubscribeStoreService subscribeStoreService, ISessionStoreService sessionStoreService,
+    public MqttLogic(MqttLogicConfig mqttLogicConfig, IAuthService authService,
+                     IServerPublishMessageStoreService serverPublishMessageStoreService,
+                     IMessageIdService messageIdService,
+                     IRetainMessageStoreService retainMessageStoreService,
+                     ISubscribeStoreService subscribeStoreService,
+                     ISessionStoreService sessionStoreService,
                      ITransportLocalStoreService transportLocalStoreService,
                      IInternalMessageService internalMessageService,
-                     IClientStoreService clientStoreService) {
+                     IClientStoreService clientStoreService,
+                     IClientPublishMessageStoreService clientPublishMessageStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.authService = authService;
-        this.dupPublishMessageStoreService = dupPublishMessageStoreService;
+        this.serverPublishMessageStoreService = serverPublishMessageStoreService;
         this.messageIdService = messageIdService;
         this.retainMessageStoreService = retainMessageStoreService;
         this.subscribeStoreService = subscribeStoreService;
@@ -49,9 +58,17 @@ public class MqttLogic {
         this.transportLocalStoreService = transportLocalStoreService;
         this.internalMessageService = internalMessageService;
         this.clientStoreService = clientStoreService;
+        this.clientPublishMessageStoreService = clientPublishMessageStoreService;
+        this.compositePublishService = new CompositePublishService(
+                clientPublishMessageStoreService,
+                serverPublishMessageStoreService,
+                subscribeStoreService,
+                messageIdService,
+                internalMessageService
+        );
         dupMessageRetryScheduleService = new DupMessageRetryScheduleService(
                 mqttLogicConfig,
-                dupPublishMessageStoreService,
+                serverPublishMessageStoreService,
                 transportLocalStoreService
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();
@@ -119,7 +136,7 @@ public class MqttLogic {
     public MqttPublishCompHandler publishComp() {
         if (mqttPublishCompHandler == null) {
             mqttPublishCompHandler = new MqttPublishCompHandler(
-                    dupPublishMessageStoreService
+                    serverPublishMessageStoreService
             );
         }
         return mqttPublishCompHandler;
@@ -136,6 +153,7 @@ public class MqttLogic {
     public MqttPubrelHandler pubrel() {
         if (mqttPubrelHandler == null) {
             mqttPubrelHandler = new MqttPubrelHandler(
+                    compositePublishService
             );
         }
         return mqttPubrelHandler;
@@ -144,7 +162,7 @@ public class MqttLogic {
     public MqttPublishAckHandler publishAck() {
         if (mqttPublishAckHandler == null) {
             mqttPublishAckHandler = new MqttPublishAckHandler(
-                    dupPublishMessageStoreService
+                    serverPublishMessageStoreService
             );
         }
         return mqttPublishAckHandler;
@@ -154,10 +172,8 @@ public class MqttLogic {
         if (mqttPublishMessageHandler == null) {
             mqttPublishMessageHandler = new MqttPublishMessageHandler(
                     sessionStoreService,
-                    internalMessageService,
                     retainMessageStoreService,
-                    dupPublishMessageStoreService,
-                    subscribeStoreService
+                    compositePublishService
             );
         }
         return mqttPublishMessageHandler;
@@ -169,7 +185,7 @@ public class MqttLogic {
                     authService,
                     transportLocalStoreService,
                     sessionStoreService,
-                    dupPublishMessageStoreService,
+                    serverPublishMessageStoreService,
                     clientStoreService,
                     mqttLogicConfig.getBrokerId()
             );
@@ -183,9 +199,8 @@ public class MqttLogic {
                     transportLocalStoreService,
                     sessionStoreService,
                     subscribeStoreService,
-                    internalMessageService,
                     clientStoreService,
-                    mqttLogicConfig.getBrokerId()
+                    compositePublishService
             );
         }
         return mqttDisConnectHandler;

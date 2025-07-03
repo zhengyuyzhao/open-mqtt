@@ -1,7 +1,7 @@
 package com.meizu.xjsd.mqtt.logic.service.internal;
 
 public interface IInternalMessageService {
-    void internalPublish(InternalMessageDTO internalMessageDTO) throws Exception;
+    void internalPublish(InternalMessageDTO internalMessageDTO);
 
     void internalSubscribe(InternalMessageDTO internalMessageDTO);
 

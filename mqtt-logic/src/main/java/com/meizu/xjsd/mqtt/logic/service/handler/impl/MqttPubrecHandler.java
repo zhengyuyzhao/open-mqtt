@@ -5,7 +5,9 @@ import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
 import com.meizu.xjsd.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 public class MqttPubrecHandler implements MessageHandler<Integer> {
 
@@ -23,6 +25,7 @@ public class MqttPubrecHandler implements MessageHandler<Integer> {
     }
 
     private void handleInner(Integer event, ITransport transport) {
+        log.debug("Handling MQTT Pubrec Message: {}", event);
         transport.publishRelease(event);
     }
 

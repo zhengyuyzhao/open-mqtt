@@ -53,7 +53,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     }
 
     @Override
-    public void internalPublish(InternalMessageDTO internalMessageDTO) throws Exception{
+    public void internalPublish(InternalMessageDTO internalMessageDTO){
         log.info("Publishing internal message: {}", internalMessageDTO);
         executorService.execute( ()->{
                 publishInner(internalMessageDTO);
@@ -106,32 +106,20 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 if (!StringUtil.isNullOrEmpty(internalMessageDTO.getToClientId())) {
                     ITransport transport = transportLocalStoreService.getTransport(internalMessageDTO.getToClientId());
                     if (transport != null) {
-                        log.info("Transport Topic:{} to clientId: {}", internalMessageDTO.getTopic(),
-                                internalMessageDTO.getToClientId());
+                        log.info("Transport Topic:{} to clientId: {}， message;{}", internalMessageDTO.getTopic(),
+                                internalMessageDTO.getToClientId(), internalMessageDTO);
                         transport.publish(internalMessageDTO.getTopic(),
                                 internalMessageDTO.getMessageBytes(),
                                 MqttQoS.valueOf(internalMessageDTO.getMqttQoS()),
                                 internalMessageDTO.isRetain(),
-                                internalMessageDTO.isDup());
+                                internalMessageDTO.isDup(),
+                                internalMessageDTO.getMessageId()
+                        );
 
                     }
                 } else {
                     // TODO 保留逻辑
-                    List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(internalMessageDTO);
-                    if (subscribeStoreDTOS == null) return;
-                    for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
-                        ITransport transport = transportLocalStoreService.getTransport(subscribeStoreDTO.getClientId());
-                        if (transport == null) {
-                            log.info("Transport not found for clientId: {}", subscribeStoreDTO.getClientId());
-                            return;
-                        }
-                        log.info("Publishing internal message to clientId: {}, topic: {}", subscribeStoreDTO.getClientId(), internalMessageDTO.getTopic());
-                        transport.publish(internalMessageDTO.getTopic(),
-                                internalMessageDTO.getMessageBytes(),
-                                MqttQoS.valueOf(internalMessageDTO.getMqttQoS()),
-                                internalMessageDTO.isRetain(),
-                                internalMessageDTO.isDup());
-                    }
+                    log.error("Internal message without clientId: {}", internalMessageDTO);
                 }
             } catch (Exception e) {
                 log.error("Error processing internal message: {}", internalMessageDTO, e);
