@@ -47,6 +47,11 @@ public class IgniteClientPublishMessageStoreService implements IClientPublishMes
     }
 
     @Override
+    public List<ClientPublishMessageStoreDTO> get(String clientId) {
+        return Optional.ofNullable(store.get(clientId)).orElse(new HashMap<>()).values().stream().toList();
+    }
+
+    @Override
     public void remove(String clientId, int messageId) {
         IgniteTransactions transactions = ignite.transactions();
         try (Transaction tx = transactions.txStart()) {

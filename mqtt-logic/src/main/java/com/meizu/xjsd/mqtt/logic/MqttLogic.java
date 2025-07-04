@@ -69,6 +69,8 @@ public class MqttLogic {
         dupMessageRetryScheduleService = new DupMessageRetryScheduleService(
                 mqttLogicConfig,
                 serverPublishMessageStoreService,
+                clientPublishMessageStoreService,
+                compositePublishService,
                 transportLocalStoreService
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();

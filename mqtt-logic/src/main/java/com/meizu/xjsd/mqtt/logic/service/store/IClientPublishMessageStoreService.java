@@ -4,6 +4,8 @@
 
 package com.meizu.xjsd.mqtt.logic.service.store;
 
+import java.util.List;
+
 /**
  * PUBLISH重发消息存储服务接口, 当QoS=1和QoS=2时存在该重发机制
  */
@@ -20,6 +22,8 @@ public interface IClientPublishMessageStoreService<T extends ClientPublishMessag
      * 获取消息集合
      */
     T get(String clientId, int messageId);
+
+    List<T> get(String clientId);
 
     /**
      * 删除消息

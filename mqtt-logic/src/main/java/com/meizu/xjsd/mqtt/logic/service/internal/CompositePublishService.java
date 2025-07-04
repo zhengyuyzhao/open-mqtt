@@ -30,6 +30,7 @@ public class CompositePublishService {
         clientPublishMessageStoreService.put(clientId, clientPublishMessageStoreDTO);
         log.info("Storing server publish message and sending by client publish message: {}, {}", clientId, messageId);
         storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
+        clientPublishMessageStoreService.remove(clientId, messageId);
 
     }
 
