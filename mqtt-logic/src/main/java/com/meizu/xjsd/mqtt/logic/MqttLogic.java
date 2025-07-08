@@ -37,6 +37,10 @@ public class MqttLogic {
     private static ExecutorService connectionService;
     private static ExecutorService publishService;
 
+    private static ExecutorService publishProtocolService;
+
+    private static ExecutorService publishReceiveService;
+
     @Builder
     public MqttLogic(MqttLogicConfig mqttLogicConfig, IAuthService authService,
                      IServerPublishMessageStoreService serverPublishMessageStoreService,
@@ -75,7 +79,9 @@ public class MqttLogic {
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();
         connectionService = Executors.newVirtualThreadPerTaskExecutor();
-        publishService = Executors.newVirtualThreadPerTaskExecutor();
+        publishService = Executors.newFixedThreadPool(10);
+        publishProtocolService = Executors.newFixedThreadPool(10);
+        publishReceiveService = Executors.newVirtualThreadPerTaskExecutor();
     }
 
 
@@ -109,7 +115,13 @@ public class MqttLogic {
     public static ExecutorService getPublishService() {
         return publishService;
     }
+    public static ExecutorService getPublishProtocolService() {
+        return publishProtocolService;
+    }
 
+    public static ExecutorService getPublishReceiveService() {
+        return publishReceiveService;
+    }
 
     public MqttLogicConfig getMqttLogicConfig() {
         return mqttLogicConfig;

@@ -22,7 +22,7 @@ public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage>
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getPublishService().submit(() -> {
+        MqttLogic.getPublishProtocolService().submit(() -> {
             handleInner(event, transport);
         });
     }
