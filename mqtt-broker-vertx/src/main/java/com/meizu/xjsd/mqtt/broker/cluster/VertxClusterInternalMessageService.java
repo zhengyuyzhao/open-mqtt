@@ -79,7 +79,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
             String broker = transportStoreService.getBroker(subscribeStoreDTO.getClientId());
             if (!StringUtil.isNullOrEmpty(broker)) {
                 // If the transport exists in the store, publish to the specific broker
-                log.info("Publishing internal message to specific broker from store: {}", broker);
+                log.info("Publishing internal message to specific broker to broker: {}", broker);
                 eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
             } else {
                 eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, objectMapper.writeValueAsString(internalMessageDTO));
