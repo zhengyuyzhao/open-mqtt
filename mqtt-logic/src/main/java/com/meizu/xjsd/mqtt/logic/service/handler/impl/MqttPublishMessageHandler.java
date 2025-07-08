@@ -45,7 +45,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
     }
 
     private void handleInner(IMqttPublishMessage event, ITransport transport) throws Exception {
-        boolean isHandshakeOk = event.qosLevel().value() > 0 ? false : true;
+        boolean isHandshakeOk = event.qosLevel().value() > 1 ? false : true;
         ClientPublishMessageStoreDTO clientPublishMessageStoreDTO =
                 ClientPublishMessageStoreDTO.builder()
                         .clientId(transport.clientIdentifier())
@@ -61,7 +61,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
             compositePublishService.storeClientPublishMessage(clientPublishMessageStoreDTO);
         }
 
-        if (event.qosLevel().value() == 0 && !event.isRetain()) {
+        if (event.qosLevel().value() < 2 && !event.isRetain()) {
             compositePublishService.storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
         }
 

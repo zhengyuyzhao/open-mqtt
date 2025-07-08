@@ -21,7 +21,7 @@ public class MqttPubrelHandler implements MessageHandler<Integer> {
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getPublishService().submit(() -> {
+        MqttLogic.getPublishProtocolService().submit(() -> {
             handleInner(messageId, transport);
         });
     }
@@ -29,7 +29,10 @@ public class MqttPubrelHandler implements MessageHandler<Integer> {
     private void handleInner(Integer event, ITransport transport) {
         log.debug("Handling MQTT Pubrel Message: {}", event);
         transport.publishComplete(event);
-        compositePublishService.storeServerPublishMessageAndSendByClientPublishMessage(transport.clientIdentifier(), event);
+        MqttLogic.getPublishReceiveService().submit(() -> {
+            compositePublishService.storeServerPublishMessageAndSendByClientPublishMessage(transport.clientIdentifier(), event);
+
+        });
     }
 
 

@@ -29,6 +29,10 @@ public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage>
 
     private void handleInner(IMqttPubAckMessage event, ITransport transport) {
         log.debug("Handling MQTT PubAck Message: {}", event.messageId());
+        MqttLogic.getPublishService().submit(() -> {
+            // Remove the message from the server publish message store
+            serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
+        });
         serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
     }
 

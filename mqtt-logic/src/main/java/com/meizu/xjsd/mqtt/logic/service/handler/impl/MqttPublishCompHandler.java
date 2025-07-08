@@ -30,7 +30,11 @@ public class MqttPublishCompHandler implements MessageHandler<IMqttPubCompMessag
 
     private void handleInner(IMqttPubCompMessage event, ITransport transport) {
         log.debug("Handling MQTT PubComp Message: {}", event.messageId());
-        serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
+        MqttLogic.getPublishService().submit(() -> {
+            // Remove the message from the server publish message store
+            serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
+        });
+
     }
 
 
