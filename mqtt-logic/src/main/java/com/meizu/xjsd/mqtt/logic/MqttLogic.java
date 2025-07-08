@@ -79,8 +79,8 @@ public class MqttLogic {
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();
         connectionService = Executors.newVirtualThreadPerTaskExecutor();
-        publishService = Executors.newFixedThreadPool(10);
-        publishProtocolService = Executors.newFixedThreadPool(10);
+        publishService = Executors.newVirtualThreadPerTaskExecutor();
+        publishProtocolService = Executors.newVirtualThreadPerTaskExecutor();
         publishReceiveService = Executors.newVirtualThreadPerTaskExecutor();
     }
 
