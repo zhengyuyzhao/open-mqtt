@@ -7,7 +7,7 @@ import lombok.ToString;
 @ToString
 public class MqttLogicConfig {
     private String brokerId = "default-broker";
-    private int dupMessageRetryThreadPoolSize = 10;
+    private int dupMessageRetryThreadPoolSize = 1;
     private int dupMessageRetryDelay = 200;
     private int dupMessageRetryInitialDelay = 200;
     private int dupMessageRetryMaxTimes = 3;
