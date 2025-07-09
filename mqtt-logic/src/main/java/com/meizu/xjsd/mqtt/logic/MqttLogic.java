@@ -115,6 +115,7 @@ public class MqttLogic {
     public static ExecutorService getPublishService() {
         return publishService;
     }
+
     public static ExecutorService getPublishProtocolService() {
         return publishProtocolService;
     }

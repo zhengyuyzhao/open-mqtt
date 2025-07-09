@@ -68,9 +68,9 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
             SessionStoreDTO sessionStoreDTO = sessionStoreService.get(clientId);
             sessionStoreService.expire(clientId, sessionStoreDTO.getExpire());
         }
-        byte[] messageBytes = event.payload();
 
         if (event.isRetain()) {
+            byte[] messageBytes = event.payload();
             retainMessageStoreService.put(event.topicName(), RetainMessageStoreDTO.builder()
                     .topic(event.topicName())
                     .messageBytes(messageBytes)
