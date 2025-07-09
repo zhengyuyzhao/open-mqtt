@@ -32,6 +32,8 @@ public class DupMessageRetryScheduleService {
     private final ScheduledExecutorService serverMessagescheduledExecutorService;
     private final ScheduledExecutorService clientMessagescheduledExecutorService;
 
+    private final long resendDelay = 15000; // 重发延迟时间，单位毫秒
+
     public DupMessageRetryScheduleService(MqttLogicConfig mqttLogicConfig,
                                           IServerPublishMessageStoreService serverPublishMessageStoreService,
                                           IClientPublishMessageStoreService clientPublishMessageStoreService,
@@ -107,7 +109,7 @@ public class DupMessageRetryScheduleService {
         log.debug("Retrying duplicate publish messages for transport: {}, messages: {}", transport.clientIdentifier(), messages);
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
-                if (System.currentTimeMillis() - message.getCreateTime() < 5 * 1000) {
+                if (System.currentTimeMillis() - message.getCreateTime() < resendDelay) {
                     return;
                 }
 
@@ -126,6 +128,9 @@ public class DupMessageRetryScheduleService {
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
                 if (!message.isHandshakeOk()) {
+                    return;
+                }
+                if (System.currentTimeMillis() - message.getCreateTime() < resendDelay) {
                     return;
                 }
                 log.info("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",

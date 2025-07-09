@@ -1,6 +1,5 @@
 package com.meizu.xjsd.mqtt.logic.service.handler.impl;
 
-import com.meizu.xjsd.mqtt.logic.MqttException;
 import com.meizu.xjsd.mqtt.logic.MqttLogic;
 import com.meizu.xjsd.mqtt.logic.entity.IMqttPublishMessage;
 import com.meizu.xjsd.mqtt.logic.service.handler.MessageHandler;
@@ -32,19 +31,14 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
         MqttLogic.getPublishService().submit(() -> {
-            try {
-                // Call the inner handling logic
-                handleInner(event, transport);
-            } catch (Exception e) {
-                // Handle any exceptions that occur during processing
-                throw new MqttException(e);
-            }
-
+            // Call the inner handling logic
+            handleInner(event, transport);
         });
 
     }
 
-    private void handleInner(IMqttPublishMessage event, ITransport transport) throws Exception {
+    @SneakyThrows
+    private void handleInner(IMqttPublishMessage event, ITransport transport) {
         boolean isHandshakeOk = event.qosLevel().value() > 1 ? false : true;
         ClientPublishMessageStoreDTO clientPublishMessageStoreDTO =
                 ClientPublishMessageStoreDTO.builder()
@@ -54,6 +48,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                         .mqttQoS(event.qosLevel().value())
                         .topic(event.topicName())
                         .messageId(event.messageId())
+                        .createTime(System.currentTimeMillis())
                         .build();
 
 
@@ -83,16 +78,20 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                     .build());
         }
 
-        switch (event.qosLevel()) {
+        MqttLogic.getPublishProtocolService().submit(() -> {
+            // Store the message in the server publish message store
+            switch (event.qosLevel()) {
 
-            case AT_LEAST_ONCE:
-                transport.publishAcknowledge(event.messageId());
-                break;
+                case AT_LEAST_ONCE:
+                    transport.publishAcknowledge(event.messageId());
+                    break;
 
-            case EXACTLY_ONCE:
-                transport.publishReceived(event.messageId());
-                break;
-        }
+                case EXACTLY_ONCE:
+                    transport.publishReceived(event.messageId());
+                    break;
+            }
+        });
+
     }
 
 

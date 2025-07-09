@@ -33,7 +33,6 @@ public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage>
             // Remove the message from the server publish message store
             serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
         });
-        serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
     }
 
 

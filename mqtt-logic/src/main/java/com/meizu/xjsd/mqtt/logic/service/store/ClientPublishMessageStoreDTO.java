@@ -32,5 +32,7 @@ public class ClientPublishMessageStoreDTO implements Serializable {
 
 	private boolean isHandshakeOk; // 是否握手成功
 
+	private long createTime = System.currentTimeMillis(); // 创建时间
+
 
 }
