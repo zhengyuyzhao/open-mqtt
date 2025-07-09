@@ -109,6 +109,10 @@ public class DupMessageRetryScheduleService {
         log.debug("Retrying duplicate publish messages for transport: {}, messages: {}", transport.clientIdentifier(), messages);
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
+                if (serverPublishMessageStoreService.get(transport.clientIdentifier(), message.getMessageId()) == null) {
+                    return;
+                }
+
                 if (System.currentTimeMillis() - message.getCreateTime() < resendDelay) {
                     return;
                 }
@@ -131,6 +135,10 @@ public class DupMessageRetryScheduleService {
                     return;
                 }
                 if (System.currentTimeMillis() - message.getCreateTime() < resendDelay) {
+                    return;
+                }
+
+                if (clientPublishMessageStoreService.get(transport.clientIdentifier(), message.getMessageId()) == null) {
                     return;
                 }
                 log.info("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
