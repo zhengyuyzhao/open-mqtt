@@ -125,7 +125,7 @@ public class DupMessageRetryScheduleService {
                 }
                 ClientPublishMessageStoreDTO clientPublishMessageStoreDTO = clientPublishMessageStoreService
                         .get(message.getFromClientId(), message.getMessageId());
-                if (clientPublishMessageStoreDTO != null) {
+                if (clientPublishMessageStoreDTO == null) {
                     return;
                 }
 

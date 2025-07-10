@@ -67,7 +67,7 @@ public class CompositePublishService {
                     ServerPublishMessageStoreDTO.builder()
                             .clientId(subscribeStoreDTO.getClientId())
                             .fromClientId(event.getClientId())
-                            .mqttQoS(event.getMqttQoS())
+                            .mqttQoS(subscribeStoreDTO.getMqttQoS())
                             .topic(event.getTopic())
                             .messageId(messageId)
                             .createTime(System.currentTimeMillis())
@@ -76,12 +76,15 @@ public class CompositePublishService {
                     .toClientId(subscribeStoreDTO.getClientId())
                     .messageBytes(event.getMessageBytes())
                     .topic(event.getTopic())
-                    .mqttQoS(event.getMqttQoS())
+                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
                     .messageId(messageId)
                     .retain(false)
                     .dup(false)
                     .build();
             internalMessageService.internalPublish(internalMessageDTO);
+            if (subscribeStoreDTO.getMqttQoS() == 0) {
+                serverPublishMessageStoreService.remove(subscribeStoreDTO.getClientId(), messageId);
+            }
         });
     }
 
