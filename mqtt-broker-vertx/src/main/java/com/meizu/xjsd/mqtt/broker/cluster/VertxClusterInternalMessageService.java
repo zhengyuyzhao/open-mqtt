@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meizu.xjsd.mqtt.logic.service.internal.IInternalMessageService;
 import com.meizu.xjsd.mqtt.logic.service.internal.InternalMessageDTO;
+import com.meizu.xjsd.mqtt.logic.service.store.IMessageIdService;
+import com.meizu.xjsd.mqtt.logic.service.store.IServerPublishMessageStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.ISubscribeStoreService;
 import com.meizu.xjsd.mqtt.logic.service.store.SubscribeStoreDTO;
 import com.meizu.xjsd.mqtt.logic.service.transport.IClientStoreService;
@@ -37,16 +39,24 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     private final IClientStoreService transportStoreService;
     private final ISubscribeStoreService subscribeStoreService;
 
+    private final IServerPublishMessageStoreService serverPublishMessageStoreService;
+
+    private final IMessageIdService messageIdService;
+
     private final String brokerId;
 
     public VertxClusterInternalMessageService(String brokerId, ITransportLocalStoreService transportLocalStoreService,
                                               IClientStoreService transportStoreService,
                                               ISubscribeStoreService subscribeStoreService,
+                                              IServerPublishMessageStoreService serverPublishMessageStoreService,
+                                              IMessageIdService messageIdService,
                                               VertxCluster vertxCluster) {
         this.brokerId = brokerId;
         this.transportLocalStoreService = transportLocalStoreService;
         this.transportStoreService = transportStoreService;
         this.subscribeStoreService = subscribeStoreService;
+        this.serverPublishMessageStoreService = serverPublishMessageStoreService;
+        this.messageIdService = messageIdService;
         Vertx vertx = vertxCluster.getVertx();
         eb = vertx.eventBus();
         init();
@@ -68,7 +78,9 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
         if (subscribeStoreDTOS == null) return;
 
         for (SubscribeStoreDTO subscribeStoreDTO: subscribeStoreDTOS) {
+            internalMessageDTO.setMessageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()));
             internalMessageDTO.setToClientId(subscribeStoreDTO.getClientId());
+            internalMessageDTO.setMqttQoS(subscribeStoreDTO.getMqttQoS());
             if (transportLocalStoreService.getTransport(subscribeStoreDTO.getClientId()) != null) {
                 // If the transport exists, publish to the specific broker
                 log.info("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
@@ -115,6 +127,8 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                                 internalMessageDTO.isDup(),
                                 internalMessageDTO.getMessageId()
                         );
+                        serverPublishMessageStoreService.remove(internalMessageDTO.getToClientId(),
+                                internalMessageDTO.getMessageId());
 
                     }
                 } else {

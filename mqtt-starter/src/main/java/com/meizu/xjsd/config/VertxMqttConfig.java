@@ -62,7 +62,10 @@ public class VertxMqttConfig {
     public IInternalMessageService internalMessageService() {
         // Assuming you have a concrete implementation of IInternalMessageService
         return new VertxClusterInternalMessageService(brokerConfig.getBroker().getBrokerId(),
-                transportLocalStoreService(), clientStoreService, subscribeStoreService, vertxCluster()); // Replace with actual implementation if needed
+                transportLocalStoreService(), clientStoreService, subscribeStoreService,
+                serverPublishMessageStoreService,
+                messageIdService,
+                vertxCluster()); // Replace with actual implementation if needed
     }
 
 
