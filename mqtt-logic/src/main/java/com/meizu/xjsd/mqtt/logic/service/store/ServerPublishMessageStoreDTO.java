@@ -18,6 +18,8 @@ public class ServerPublishMessageStoreDTO implements Serializable {
 
 	private static final long serialVersionUID = -8112511377194421600L;
 
+	private String fromClientId;
+
 	private String clientId;
 
 	private String topic;
@@ -26,7 +28,7 @@ public class ServerPublishMessageStoreDTO implements Serializable {
 
 	private int messageId;
 
-	private byte[] messageBytes;
+//	private byte[] messageBytes;
 
 	private long createTime;
 

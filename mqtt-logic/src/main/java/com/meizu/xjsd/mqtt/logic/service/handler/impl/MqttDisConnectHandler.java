@@ -43,17 +43,18 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
             // 发送遗嘱消息
             if (sessionStoreDTO.getWillMessage() != null && StrUtil.isNotEmpty(sessionStoreDTO.getWillMessage().getWillTopic())) {
 
-                ServerPublishMessageStoreDTO serverPublishMessageStoreDTO =
-                        ServerPublishMessageStoreDTO.builder()
+                ClientPublishMessageStoreDTO clientPublishMessageStoreDTO =
+                        ClientPublishMessageStoreDTO.builder()
                                 .clientId(transport.clientIdentifier())
                                 .messageBytes(sessionStoreDTO.getWillMessage().getWillMessageBytes())
                                 .mqttQoS(sessionStoreDTO.getWillMessage().getWillQos())
                                 .topic(sessionStoreDTO.getWillMessage().getWillTopic())
                                 .createTime(System.currentTimeMillis())
+                                .isHandshakeOk(true) // 遗嘱消息通常不需要握手确认
                                 .build();
 
-                compositePublishService.storeServerPublishMessageAndSendDirect(
-                        serverPublishMessageStoreDTO
+                compositePublishService.storeClientPublishMessageAndSend(
+                        clientPublishMessageStoreDTO
                 );
 
             }

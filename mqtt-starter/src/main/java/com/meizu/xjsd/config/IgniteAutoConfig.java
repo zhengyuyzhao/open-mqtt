@@ -77,6 +77,8 @@ public class IgniteAutoConfig {
         IgniteConfiguration igniteConfiguration = new IgniteConfiguration();
         // Ignite实例名称
         igniteConfiguration.setIgniteInstanceName(brokerConfig.getBroker().getBrokerId());
+        igniteConfiguration.setSystemThreadPoolSize(igniteProperties.getSystemThreadPoolSize());
+        igniteConfiguration.setQueryThreadPoolSize(igniteProperties.getQueryThreadPoolSize());
         // Ignite日志
         Logger logger = LoggerFactory.getLogger("org.apache.ignite");
         igniteConfiguration.setGridLogger(new Slf4jLogger(logger));
@@ -113,16 +115,10 @@ public class IgniteAutoConfig {
             tcpDiscoverySpi.setIpFinder(tcpDiscoveryVmIpFinder);
         }
         igniteConfiguration.setDiscoverySpi(tcpDiscoverySpi);
-//        cleanVertxClusterCache();
+
         Ignite ignite = Ignition.start(igniteConfiguration);
         ignite.cluster().state(ClusterState.ACTIVE);
-//        Collection<ClusterNode> dataNodes = ignite.cluster().forServers().nodes();
-//        dataNodes.stream().forEach(node -> {
-//            log.info("Ignite node: {} with ID: {}", node.addresses(), node.id());
-//        });
-//        ignite.cluster().baselineAutoAdjustEnabled(false);
-//        // 设置新的基线拓扑
-//        ignite.cluster().setBaselineTopology(dataNodes);
+
         ignite.cluster().baselineAutoAdjustEnabled(true);
         ignite.cluster().baselineAutoAdjustTimeout(20000);
 

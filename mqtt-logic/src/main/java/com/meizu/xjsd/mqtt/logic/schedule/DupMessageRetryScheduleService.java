@@ -119,7 +119,17 @@ public class DupMessageRetryScheduleService {
 
                 log.info("Sending duplicate message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
-                transport.publish(message.getTopic(), message.getMessageBytes(),
+                ITransport currentTransport = transportLocalStoreService.getTransport(transport.clientIdentifier());
+                if (currentTransport == null) {
+                    return;
+                }
+                ClientPublishMessageStoreDTO clientPublishMessageStoreDTO = clientPublishMessageStoreService
+                        .get(message.getFromClientId(), message.getMessageId());
+                if (clientPublishMessageStoreDTO != null) {
+                    return;
+                }
+
+                currentTransport.publish(message.getTopic(), clientPublishMessageStoreDTO.getMessageBytes(),
                         MqttQoS.valueOf(message.getMqttQoS()), true, false, message.getMessageId());
             });
         }
