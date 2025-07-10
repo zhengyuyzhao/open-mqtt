@@ -127,8 +127,10 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                                 internalMessageDTO.isDup(),
                                 internalMessageDTO.getMessageId()
                         );
-                        serverPublishMessageStoreService.remove(internalMessageDTO.getToClientId(),
-                                internalMessageDTO.getMessageId());
+                        if (internalMessageDTO.getMqttQoS() == 0) {
+                            serverPublishMessageStoreService.remove(internalMessageDTO.getToClientId(),
+                                    internalMessageDTO.getMessageId());
+                        }
 
                     }
                 } else {
