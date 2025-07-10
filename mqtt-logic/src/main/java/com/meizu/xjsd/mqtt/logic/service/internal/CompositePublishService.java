@@ -60,8 +60,12 @@ public class CompositePublishService {
 
     public void storeServerPublishMessageAndSend(ClientPublishMessageStoreDTO event) {
         List<SubscribeStoreDTO> list = subscribeStoreService.search(event.getTopic());
+        if (list.isEmpty()) {
+            log.warn("No subscribers found for topic: {}", event.getTopic());
+            return;
+        }
         list.forEach(subscribeStoreDTO -> {
-
+            log.info("SubscribeStoreDTO : {}", subscribeStoreDTO);
             int messageId = messageIdService.getNextMessageId(subscribeStoreDTO.getClientId());
             serverPublishMessageStoreService.put(subscribeStoreDTO.getClientId(),
                     ServerPublishMessageStoreDTO.builder()

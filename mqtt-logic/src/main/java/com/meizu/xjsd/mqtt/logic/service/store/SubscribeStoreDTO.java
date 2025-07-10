@@ -4,11 +4,14 @@
 
 package com.meizu.xjsd.mqtt.logic.service.store;
 
+import lombok.ToString;
+
 import java.io.Serializable;
 
 /**
  * 订阅存储
  */
+@ToString
 public class SubscribeStoreDTO implements Serializable {
 
 	private static final long serialVersionUID = 1276156087085594264L;
