@@ -1,6 +1,5 @@
 package com.zzy.mqtt.broker.cluster;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -10,7 +9,6 @@ import com.zzy.mqtt.logic.service.internal.InternalMessageDTO;
 import com.zzy.mqtt.logic.service.store.IMessageIdService;
 import com.zzy.mqtt.logic.service.store.IServerPublishMessageStoreService;
 import com.zzy.mqtt.logic.service.store.ISubscribeStoreService;
-import com.zzy.mqtt.logic.service.store.SubscribeStoreDTO;
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -21,10 +19,8 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageConsumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,7 +47,6 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     private final Cache<String, String> transportBrokerCache;
 
-    private final Cache<String, List<SubscribeStoreDTO>> subscribeCache;
 
     public VertxClusterInternalMessageService(String brokerId, ITransportLocalStoreService transportLocalStoreService,
                                               IClientStoreService transportStoreService,
@@ -71,10 +66,6 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 .expireAfterWrite(Duration.ofMillis(5000))
                 .build();
 
-        subscribeCache = Caffeine.newBuilder()
-                .maximumSize(1000)
-                .expireAfterWrite(Duration.ofMillis(5000))
-                .build();
 
         Vertx vertx = vertxCluster.getVertx();
         eb = vertx.eventBus();
@@ -93,30 +84,23 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     @SneakyThrows
     private void publishInner(InternalMessageDTO internalMessageDTO) {
 
-        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(internalMessageDTO.getTopic());
-        if (subscribeStoreDTOS == null) return;
 
-        for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
-            internalMessageDTO.setMessageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()));
-            internalMessageDTO.setToClientId(subscribeStoreDTO.getClientId());
-            internalMessageDTO.setMqttQoS(subscribeStoreDTO.getMqttQoS());
-            if (transportLocalStoreService.getTransport(subscribeStoreDTO.getClientId()) != null) {
-                // If the transport exists, publish to the specific broker
-                log.info("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
-                internalSubscribe(internalMessageDTO);
-                continue;
-            }
-
-            String broker = getTransportBroker(subscribeStoreDTO.getClientId());
-            if (StrUtil.isNotEmpty(broker)) {
-                // If the transport exists in the store, publish to the specific broker
-                log.info("Publishing internal message to specific broker to broker: {}", broker);
-                eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
-            } else {
-                eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, objectMapper.writeValueAsString(internalMessageDTO));
-            }
-
+        if (transportLocalStoreService.getTransport(internalMessageDTO.getToClientId()) != null) {
+            // If the transport exists, publish to the specific broker
+            log.info("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
+            internalSubscribe(internalMessageDTO);
+            return;
         }
+
+        String broker = getTransportBroker(internalMessageDTO.getToClientId());
+        if (StrUtil.isNotEmpty(broker)) {
+            // If the transport exists in the store, publish to the specific broker
+            log.info("Publishing internal message to specific broker to broker: {}", broker);
+            eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
+        } else {
+            eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, objectMapper.writeValueAsString(internalMessageDTO));
+        }
+
 
 //        String json = objectMapper.writeValueAsString(internalMessageDTO);
 //        String broker = transportStoreService.getBroker(internalMessageDTO.getClientId());
@@ -172,20 +156,6 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
             transportBrokerCache.put(clientId, broker);
         }
         return broker;
-    }
-
-    @Nullable
-    private List<SubscribeStoreDTO> getSubscribeStoreDTOS(String topic) {
-        if (subscribeCache.getIfPresent(topic) != null) {
-            return subscribeCache.getIfPresent(topic);
-        }
-        List<SubscribeStoreDTO> subscribeStoreDTOS = subscribeStoreService.search(topic);
-        if (CollectionUtil.isEmpty(subscribeStoreDTOS)) {
-            log.info("No subscribers found for topic: {}", topic);
-            return null;
-        }
-        subscribeCache.put(topic, subscribeStoreDTOS);
-        return subscribeStoreDTOS;
     }
 
 

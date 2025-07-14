@@ -77,6 +77,7 @@ public class IgniteAutoConfig {
         igniteConfiguration.setPublicThreadPoolSize(igniteProperties.getPublicThreadPoolSize());
         igniteConfiguration.setSystemThreadPoolSize(igniteProperties.getSystemThreadPoolSize());
         igniteConfiguration.setQueryThreadPoolSize(igniteProperties.getQueryThreadPoolSize());
+        igniteConfiguration.setServiceThreadPoolSize(igniteProperties.getServiceThreadPoolSize());
         // Ignite日志
         Logger logger = LoggerFactory.getLogger("org.apache.ignite");
         igniteConfiguration.setGridLogger(new Slf4jLogger(logger));

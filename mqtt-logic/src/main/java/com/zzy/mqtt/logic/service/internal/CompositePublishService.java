@@ -1,9 +1,15 @@
 package com.zzy.mqtt.logic.service.internal;
 
 
+import cn.hutool.core.collection.CollectionUtil;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zzy.mqtt.logic.service.store.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.Duration;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -14,6 +20,11 @@ public class CompositePublishService {
     private final ISubscribeStoreService subscribeStoreService;
     private final IMessageIdService messageIdService;
     private final IInternalMessageService internalMessageService;
+    private final Cache<String, List<SubscribeStoreDTO>> subscribeCache =
+            Caffeine.newBuilder()
+                    .maximumSize(1000)
+                    .expireAfterWrite(Duration.ofMillis(5000))
+                    .build();
 
     public void storeClientPublishMessage(ClientPublishMessageStoreDTO dto) {
         log.info("Storing client publish message: {}", dto);
@@ -56,17 +67,64 @@ public class CompositePublishService {
 //    }
 
     public void storeServerPublishMessageAndSend(ClientPublishMessageStoreDTO event) {
+        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
+        if (subscribeStoreDTOS == null) return;
 
-        InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
-//                    .toClientId(subscribeStoreDTO.getClientId())
-                .messageBytes(event.getMessageBytes())
-                .topic(event.getTopic())
-//                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
-//                .messageId(messageId)
-                .retain(false)
-                .dup(false)
-                .build();
-        internalMessageService.internalPublish(internalMessageDTO);
+        for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
+            InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
+                    .messageBytes(event.getMessageBytes())
+                    .topic(event.getTopic())
+                    .retain(false)
+                    .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
+                    .toClientId(subscribeStoreDTO.getClientId())
+                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
+                    .dup(false)
+                    .build();
+            ServerPublishMessageStoreDTO serverPublishMessageStoreDTO = ServerPublishMessageStoreDTO.builder()
+                    .fromClientId(event.getClientId())
+                    .clientId(subscribeStoreDTO.getClientId())
+                    .topic(event.getTopic())
+                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
+                    .messageId(internalMessageDTO.getMessageId())
+                    .createTime(System.currentTimeMillis())
+                    .build();
+            serverPublishMessageStoreService.put(subscribeStoreDTO.getClientId(), serverPublishMessageStoreDTO);
+            internalMessageService.internalPublish(internalMessageDTO);
+        }
     }
+
+
+    private List<SubscribeStoreDTO> getSubscribeStoreDTOS(String topic) {
+        List<SubscribeStoreDTO> cache = subscribeCache.getIfPresent(topic);
+        if (cache != null) {
+            return cache;
+        }
+        List<SubscribeStoreDTO> subscribeStoreDTOS = subscribeStoreService.search(topic);
+        if (CollectionUtil.isEmpty(subscribeStoreDTOS)) {
+            log.info("No subscribers found for topic: {}", topic);
+            return null;
+        }
+        subscribeCache.put(topic, subscribeStoreDTOS);
+        return subscribeStoreDTOS;
+    }
+
+    public void send(ClientPublishMessageStoreDTO event) {
+        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
+        if (subscribeStoreDTOS == null) return;
+
+        for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
+            InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
+                    .messageBytes(event.getMessageBytes())
+                    .topic(event.getTopic())
+                    .retain(false)
+                    .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
+                    .toClientId(subscribeStoreDTO.getClientId())
+                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
+                    .dup(false)
+                    .build();
+            internalMessageService.internalPublish(internalMessageDTO);
+        }
+    }
+
 
 }

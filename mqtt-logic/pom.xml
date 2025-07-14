@@ -18,6 +18,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.2.1</version> <!-- 请使用最新版本 -->
+        </dependency>
         <!-- https://mvnrepository.com/artifact/io.netty/netty-codec-mqtt -->
         <dependency>
             <groupId>io.netty</groupId>

@@ -56,8 +56,12 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
             compositePublishService.storeClientPublishMessage(clientPublishMessageStoreDTO);
         }
 
-        if (event.qosLevel().value() < 2 && !event.isRetain()) {
+        if (event.qosLevel().value() == 1 && !event.isRetain()) {
             compositePublishService.storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
+        }
+
+        if (event.qosLevel().value() == 0 && !event.isRetain()) {
+            compositePublishService.send(clientPublishMessageStoreDTO);
         }
 
 
