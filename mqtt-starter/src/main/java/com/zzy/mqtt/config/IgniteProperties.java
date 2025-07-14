@@ -50,15 +50,15 @@ public class IgniteProperties {
 	 */
 	private int notPersistenceMaxSize = 1024;
 
-	private int systemThreadPoolSize = 16;
+	private int systemThreadPoolSize = 32;
 
-	private int queryThreadPoolSize = 16;
+	private int queryThreadPoolSize = 32;
 
-	private int stripedPoolSize = 16;
+	private int stripedPoolSize = 32;
 
-	private int publicThreadPoolSize = 16;
+	private int publicThreadPoolSize = 32;
 
-	private int serviceThreadPoolSize = 16;
+	private int serviceThreadPoolSize = 32;
 
 
 }
