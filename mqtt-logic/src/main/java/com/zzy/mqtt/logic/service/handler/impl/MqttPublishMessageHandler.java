@@ -53,15 +53,15 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
 
 
         if (event.qosLevel().value() == 2 && !event.isRetain()) {
-            compositePublishService.storeClientPublishMessage(clientPublishMessageStoreDTO);
+            compositePublishService.storeClientPublishMessage(clientPublishMessageStoreDTO).get();
         }
 
         if (event.qosLevel().value() == 1 && !event.isRetain()) {
-            compositePublishService.storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
+            compositePublishService.storeServerPublishMessageAndSend(clientPublishMessageStoreDTO).get();
         }
 
         if (event.qosLevel().value() == 0 && !event.isRetain()) {
-            compositePublishService.send(clientPublishMessageStoreDTO);
+            compositePublishService.send(clientPublishMessageStoreDTO).get();
         }
 
 

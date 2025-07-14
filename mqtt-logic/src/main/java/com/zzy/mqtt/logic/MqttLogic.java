@@ -41,6 +41,8 @@ public class MqttLogic {
 
     private static ExecutorService publishReceiveService;
 
+    private static ExecutorService storeService;
+
 
 
     @Builder
@@ -84,6 +86,7 @@ public class MqttLogic {
         publishService = Executors.newVirtualThreadPerTaskExecutor();
         publishProtocolService = Executors.newVirtualThreadPerTaskExecutor();
         publishReceiveService = Executors.newVirtualThreadPerTaskExecutor();
+        storeService = Executors.newWorkStealingPool(64);
     }
 
 
@@ -108,6 +111,10 @@ public class MqttLogic {
 
     public static ExecutorService getExecutorService() {
         return executorService;
+    }
+
+    public static ExecutorService getStoreService() {
+        return storeService;
     }
 
     public static ExecutorService getConnectionService() {

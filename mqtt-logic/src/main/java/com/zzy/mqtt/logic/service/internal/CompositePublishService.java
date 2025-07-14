@@ -4,12 +4,14 @@ package com.zzy.mqtt.logic.service.internal;
 import cn.hutool.core.collection.CollectionUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.service.store.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Future;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,26 +28,36 @@ public class CompositePublishService {
                     .expireAfterWrite(Duration.ofMillis(5000))
                     .build();
 
-    public void storeClientPublishMessage(ClientPublishMessageStoreDTO dto) {
+    public Future<Void> storeClientPublishMessage(ClientPublishMessageStoreDTO dto) {
         log.info("Storing client publish message: {}", dto);
-        clientPublishMessageStoreService.put(dto.getClientId(), dto);
+        return MqttLogic.getStoreService().submit(() -> {
+            clientPublishMessageStoreService.put(dto.getClientId(), dto);
+            return null;
+        });
     }
 
-    public void storeClientPublishMessageAndSend(ClientPublishMessageStoreDTO dto) {
+    public Future<Void> storeClientPublishMessageAndSend(ClientPublishMessageStoreDTO dto) {
         log.info("Storing client publish message: {}", dto);
-        clientPublishMessageStoreService.put(dto.getClientId(), dto);
-        storeServerPublishMessageAndSend(dto);
-        clientPublishMessageStoreService.remove(dto.getClientId(), dto.getMessageId());
+        return MqttLogic.getStoreService().submit(() -> {
+            clientPublishMessageStoreService.put(dto.getClientId(), dto);
+            storeServerPublishMessageAndSend(dto);
+            clientPublishMessageStoreService.remove(dto.getClientId(), dto.getMessageId());
+            return null;
+        });
     }
 
-    public void storeServerPublishMessageAndSendByClientPublishMessage(String clientId, int messageId) {
-        ClientPublishMessageStoreDTO clientPublishMessageStoreDTO =
-                clientPublishMessageStoreService.get(clientId, messageId);
-        clientPublishMessageStoreDTO.setHandshakeOk(true);
-        clientPublishMessageStoreService.put(clientId, clientPublishMessageStoreDTO);
-        log.info("Storing server publish message and sending by client publish message: {}, {}", clientId, messageId);
-        storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
-        clientPublishMessageStoreService.remove(clientId, messageId);
+    public Future<Void> storeServerPublishMessageAndSendByClientPublishMessage(String clientId, int messageId) {
+        return MqttLogic.getStoreService().submit(() -> {
+            ClientPublishMessageStoreDTO clientPublishMessageStoreDTO =
+                    clientPublishMessageStoreService.get(clientId, messageId);
+            clientPublishMessageStoreDTO.setHandshakeOk(true);
+            clientPublishMessageStoreService.put(clientId, clientPublishMessageStoreDTO);
+            log.info("Storing server publish message and sending by client publish message: {}, {}", clientId, messageId);
+            storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
+            clientPublishMessageStoreService.remove(clientId, messageId);
+            return null;
+        });
+
 
     }
 
@@ -66,31 +78,37 @@ public class CompositePublishService {
 //        });
 //    }
 
-    public void storeServerPublishMessageAndSend(ClientPublishMessageStoreDTO event) {
-        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
-        if (subscribeStoreDTOS == null) return;
+    public Future<Void> storeServerPublishMessageAndSend(ClientPublishMessageStoreDTO event) {
 
-        for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
-            InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
-                    .messageBytes(event.getMessageBytes())
-                    .topic(event.getTopic())
-                    .retain(false)
-                    .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
-                    .toClientId(subscribeStoreDTO.getClientId())
-                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
-                    .dup(false)
-                    .build();
-            ServerPublishMessageStoreDTO serverPublishMessageStoreDTO = ServerPublishMessageStoreDTO.builder()
-                    .fromClientId(event.getClientId())
-                    .clientId(subscribeStoreDTO.getClientId())
-                    .topic(event.getTopic())
-                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
-                    .messageId(internalMessageDTO.getMessageId())
-                    .createTime(System.currentTimeMillis())
-                    .build();
-            serverPublishMessageStoreService.put(subscribeStoreDTO.getClientId(), serverPublishMessageStoreDTO);
-            internalMessageService.internalPublish(internalMessageDTO);
-        }
+
+        return MqttLogic.getStoreService().submit(() -> {
+            List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
+            if (subscribeStoreDTOS == null) return null;
+
+            for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
+                InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
+                        .messageBytes(event.getMessageBytes())
+                        .topic(event.getTopic())
+                        .retain(false)
+                        .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
+                        .toClientId(subscribeStoreDTO.getClientId())
+                        .mqttQoS(subscribeStoreDTO.getMqttQoS())
+                        .dup(false)
+                        .build();
+                ServerPublishMessageStoreDTO serverPublishMessageStoreDTO = ServerPublishMessageStoreDTO.builder()
+                        .fromClientId(event.getClientId())
+                        .clientId(subscribeStoreDTO.getClientId())
+                        .topic(event.getTopic())
+                        .mqttQoS(subscribeStoreDTO.getMqttQoS())
+                        .messageId(internalMessageDTO.getMessageId())
+                        .createTime(System.currentTimeMillis())
+                        .build();
+                serverPublishMessageStoreService.put(subscribeStoreDTO.getClientId(), serverPublishMessageStoreDTO);
+                internalMessageService.internalPublish(internalMessageDTO);
+            }
+            return null;
+        });
+
     }
 
 
@@ -108,22 +126,26 @@ public class CompositePublishService {
         return subscribeStoreDTOS;
     }
 
-    public void send(ClientPublishMessageStoreDTO event) {
-        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
-        if (subscribeStoreDTOS == null) return;
+    public Future<Void> send(ClientPublishMessageStoreDTO event) {
+        return MqttLogic.getPublishReceiveService().submit(() -> {
+            List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
+            if (subscribeStoreDTOS == null) return null;
 
-        for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
-            InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
-                    .messageBytes(event.getMessageBytes())
-                    .topic(event.getTopic())
-                    .retain(false)
-                    .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
-                    .toClientId(subscribeStoreDTO.getClientId())
-                    .mqttQoS(subscribeStoreDTO.getMqttQoS())
-                    .dup(false)
-                    .build();
-            internalMessageService.internalPublish(internalMessageDTO);
-        }
+            for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
+                InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
+                        .messageBytes(event.getMessageBytes())
+                        .topic(event.getTopic())
+                        .retain(false)
+                        .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
+                        .toClientId(subscribeStoreDTO.getClientId())
+                        .mqttQoS(subscribeStoreDTO.getMqttQoS())
+                        .dup(false)
+                        .build();
+                internalMessageService.internalPublish(internalMessageDTO);
+            }
+            return null;
+        });
+
     }
 
 
