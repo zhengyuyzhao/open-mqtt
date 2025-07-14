@@ -1,6 +1,7 @@
 package com.zzy.mqtt.broker.cluster;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -107,7 +108,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
             }
 
             String broker = getTransportBroker(subscribeStoreDTO.getClientId());
-            if (!StringUtil.isNullOrEmpty(broker)) {
+            if (StrUtil.isNotEmpty(broker)) {
                 // If the transport exists in the store, publish to the specific broker
                 log.info("Publishing internal message to specific broker to broker: {}", broker);
                 eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
@@ -167,7 +168,9 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
             return transportBrokerCache.getIfPresent(clientId);
         }
         String broker = transportStoreService.getBroker(clientId);
-        transportBrokerCache.put(clientId, broker);
+        if (StrUtil.isNotEmpty(broker)) {
+            transportBrokerCache.put(clientId, broker);
+        }
         return broker;
     }
 
