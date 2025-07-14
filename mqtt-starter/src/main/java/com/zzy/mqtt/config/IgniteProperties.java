@@ -52,7 +52,11 @@ public class IgniteProperties {
 
 	private int systemThreadPoolSize = 64;
 
-	private int queryThreadPoolSize = 16;
+	private int queryThreadPoolSize = 64;
+
+	private int stripedPoolSize = 64;
+
+	private int publicThreadPoolSize = 64;
 
 
 }

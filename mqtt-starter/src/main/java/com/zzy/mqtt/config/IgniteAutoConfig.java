@@ -73,6 +73,8 @@ public class IgniteAutoConfig {
         IgniteConfiguration igniteConfiguration = new IgniteConfiguration();
         // Ignite实例名称
         igniteConfiguration.setIgniteInstanceName(brokerConfig.getBroker().getBrokerId());
+        igniteConfiguration.setStripedPoolSize(igniteProperties.getStripedPoolSize());
+        igniteConfiguration.setPublicThreadPoolSize(igniteProperties.getPublicThreadPoolSize());
         igniteConfiguration.setSystemThreadPoolSize(igniteProperties.getSystemThreadPoolSize());
         igniteConfiguration.setQueryThreadPoolSize(igniteProperties.getQueryThreadPoolSize());
         // Ignite日志
