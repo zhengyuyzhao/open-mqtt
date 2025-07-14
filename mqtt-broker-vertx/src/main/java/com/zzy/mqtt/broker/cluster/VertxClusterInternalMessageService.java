@@ -2,6 +2,8 @@ package com.zzy.mqtt.broker.cluster;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zzy.mqtt.logic.service.internal.IInternalMessageService;
 import com.zzy.mqtt.logic.service.internal.InternalMessageDTO;
 import com.zzy.mqtt.logic.service.store.IMessageIdService;
@@ -20,6 +22,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -45,6 +48,10 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     private final String brokerId;
 
+    private final Cache<String, String> transportBrokerCache;
+
+    private final Cache<String, List<SubscribeStoreDTO>> subscribeCache;
+
     public VertxClusterInternalMessageService(String brokerId, ITransportLocalStoreService transportLocalStoreService,
                                               IClientStoreService transportStoreService,
                                               ISubscribeStoreService subscribeStoreService,
@@ -57,16 +64,27 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
         this.subscribeStoreService = subscribeStoreService;
         this.serverPublishMessageStoreService = serverPublishMessageStoreService;
         this.messageIdService = messageIdService;
+
+        transportBrokerCache = Caffeine.newBuilder()
+                .maximumSize(1000)
+                .expireAfterWrite(Duration.ofMillis(5000))
+                .build();
+
+        subscribeCache = Caffeine.newBuilder()
+                .maximumSize(1000)
+                .expireAfterWrite(Duration.ofMillis(5000))
+                .build();
+
         Vertx vertx = vertxCluster.getVertx();
         eb = vertx.eventBus();
         init();
     }
 
     @Override
-    public void internalPublish(InternalMessageDTO internalMessageDTO){
+    public void internalPublish(InternalMessageDTO internalMessageDTO) {
         log.info("Publishing internal message: {}", internalMessageDTO);
-        executorService.execute( ()->{
-                publishInner(internalMessageDTO);
+        executorService.execute(() -> {
+            publishInner(internalMessageDTO);
         });
 
     }
@@ -74,10 +92,10 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     @SneakyThrows
     private void publishInner(InternalMessageDTO internalMessageDTO) {
 
-        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(internalMessageDTO);
+        List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(internalMessageDTO.getTopic());
         if (subscribeStoreDTOS == null) return;
 
-        for (SubscribeStoreDTO subscribeStoreDTO: subscribeStoreDTOS) {
+        for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
             internalMessageDTO.setMessageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()));
             internalMessageDTO.setToClientId(subscribeStoreDTO.getClientId());
             internalMessageDTO.setMqttQoS(subscribeStoreDTO.getMqttQoS());
@@ -88,7 +106,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 continue;
             }
 
-            String broker = transportStoreService.getBroker(subscribeStoreDTO.getClientId());
+            String broker = getTransportBroker(subscribeStoreDTO.getClientId());
             if (!StringUtil.isNullOrEmpty(broker)) {
                 // If the transport exists in the store, publish to the specific broker
                 log.info("Publishing internal message to specific broker to broker: {}", broker);
@@ -144,19 +162,32 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     }
 
+    private String getTransportBroker(String clientId) {
+        if (transportBrokerCache.getIfPresent(clientId) != null) {
+            return transportBrokerCache.getIfPresent(clientId);
+        }
+        String broker = transportStoreService.getBroker(clientId);
+        transportBrokerCache.put(clientId, broker);
+        return broker;
+    }
+
     @Nullable
-    private List<SubscribeStoreDTO> getSubscribeStoreDTOS(InternalMessageDTO internalMessageDTO) {
-        List<SubscribeStoreDTO> subscribeStoreDTOS =  subscribeStoreService.search(internalMessageDTO.getTopic());
+    private List<SubscribeStoreDTO> getSubscribeStoreDTOS(String topic) {
+        if (subscribeCache.getIfPresent(topic) != null) {
+            return subscribeCache.getIfPresent(topic);
+        }
+        List<SubscribeStoreDTO> subscribeStoreDTOS = subscribeStoreService.search(topic);
         if (CollectionUtil.isEmpty(subscribeStoreDTOS)) {
-            log.info("No subscribers found for topic: {}", internalMessageDTO.getTopic());
+            log.info("No subscribers found for topic: {}", topic);
             return null;
         }
+        subscribeCache.put(topic, subscribeStoreDTOS);
         return subscribeStoreDTOS;
     }
 
 
     public void init() {
-        MessageConsumer<String> consumer =  eb.consumer(INTERNAL_MESSAGE_TOPIC_PREFIX, message -> {
+        MessageConsumer<String> consumer = eb.consumer(INTERNAL_MESSAGE_TOPIC_PREFIX, message -> {
             try {
                 InternalMessageDTO dto = objectMapper.readValue(message.body(), InternalMessageDTO.class);
                 internalSubscribe(dto);
@@ -164,7 +195,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 log.error("Error processing internal message {}", e);
             }
         });
-        MessageConsumer<String> point2PointConsumer =  eb.consumer(INTERNAL_MESSAGE_TOPIC_PREFIX + brokerId, message -> {
+        MessageConsumer<String> point2PointConsumer = eb.consumer(INTERNAL_MESSAGE_TOPIC_PREFIX + brokerId, message -> {
             try {
                 InternalMessageDTO dto = objectMapper.readValue(message.body(), InternalMessageDTO.class);
                 internalSubscribe(dto);
