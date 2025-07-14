@@ -127,7 +127,7 @@ public class CompositePublishService {
     }
 
     public Future<Void> send(ClientPublishMessageStoreDTO event) {
-        return MqttLogic.getPublishReceiveService().submit(() -> {
+        return MqttLogic.getStoreService().submit(() -> {
             List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
             if (subscribeStoreDTOS == null) return null;
 
