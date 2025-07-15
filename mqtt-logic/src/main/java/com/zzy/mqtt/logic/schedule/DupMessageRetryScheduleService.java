@@ -3,10 +3,7 @@ package com.zzy.mqtt.logic.schedule;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.zzy.mqtt.logic.config.MqttLogicConfig;
 import com.zzy.mqtt.logic.service.internal.CompositePublishService;
-import com.zzy.mqtt.logic.service.store.ClientPublishMessageStoreDTO;
-import com.zzy.mqtt.logic.service.store.IClientPublishMessageStoreService;
-import com.zzy.mqtt.logic.service.store.IServerPublishMessageStoreService;
-import com.zzy.mqtt.logic.service.store.ServerPublishMessageStoreDTO;
+import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -28,22 +25,27 @@ public class DupMessageRetryScheduleService {
     private final CompositePublishService compositePublishService;
     private final ITransportLocalStoreService transportLocalStoreService;
 
+    private final ISubscribeStoreService subscribeStoreService;
+
 
     private final ScheduledExecutorService serverMessagescheduledExecutorService;
     private final ScheduledExecutorService clientMessagescheduledExecutorService;
 
     private final long resendDelay = 15000; // 重发延迟时间，单位毫秒
+    private final int resendTimes = 3; // 重发次数
 
     public DupMessageRetryScheduleService(MqttLogicConfig mqttLogicConfig,
                                           IServerPublishMessageStoreService serverPublishMessageStoreService,
                                           IClientPublishMessageStoreService clientPublishMessageStoreService,
                                           CompositePublishService compositePublishService,
-                                          ITransportLocalStoreService transportLocalStoreService) {
+                                          ITransportLocalStoreService transportLocalStoreService,
+                                          ISubscribeStoreService subscribeStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.serverPublishMessageStoreService = serverPublishMessageStoreService;
         this.clientPublishMessageStoreService = clientPublishMessageStoreService;
         this.transportLocalStoreService = transportLocalStoreService;
         this.compositePublishService = compositePublishService;
+        this.subscribeStoreService = subscribeStoreService;
         this.serverMessagescheduledExecutorService = new ScheduledThreadPoolExecutor(
                 mqttLogicConfig.getDupMessageRetryThreadPoolSize(),
                 new ThreadFactoryBuilder().setNamePrefix("server-message-retry").build()
@@ -117,6 +119,13 @@ public class DupMessageRetryScheduleService {
                     return;
                 }
 
+                if (message.getTimes() > resendTimes ) {
+                    log.warn("Message {} has been retried {} times, removing from store", message.getMessageId(), message.getTimes());
+                    serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
+                    return;
+                }
+
+
                 log.info("Sending duplicate message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
                 ITransport currentTransport = transportLocalStoreService.getTransport(transport.clientIdentifier());
@@ -129,6 +138,16 @@ public class DupMessageRetryScheduleService {
 //                    serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
 //                    return;
 //                }
+
+                SubscribeStoreDTO subscribeStoreDTO = subscribeStoreService.get(message.getTopic(), currentTransport.clientIdentifier());
+                if (subscribeStoreDTO == null || subscribeStoreDTO.getMqttQoS() == 0) {
+                    serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
+                    return;
+                }
+
+                message.setCreateTime(System.currentTimeMillis());
+                message.setTimes(message.getTimes() + 1);
+                serverPublishMessageStoreService.put(transport.clientIdentifier(), message);
 
                 currentTransport.publish(message.getTopic(), message.getMessageBytes(),
                         MqttQoS.valueOf(message.getMqttQoS()), true, false, message.getMessageId());

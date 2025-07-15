@@ -132,23 +132,25 @@ public class CompositePublishService {
             for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
                 InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
                         .messageBytes(event.getMessageBytes())
-                        .topic(event.getTopic())
+                        .topic(subscribeStoreDTO.getTopicFilter())
                         .retain(false)
                         .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
                         .toClientId(subscribeStoreDTO.getClientId())
                         .mqttQoS(subscribeStoreDTO.getMqttQoS())
                         .dup(false)
                         .build();
-                ServerPublishMessageStoreDTO serverPublishMessageStoreDTO = ServerPublishMessageStoreDTO.builder()
-                        .fromClientId(event.getClientId())
-                        .clientId(subscribeStoreDTO.getClientId())
-                        .topic(event.getTopic())
-                        .mqttQoS(subscribeStoreDTO.getMqttQoS())
-                        .messageId(internalMessageDTO.getMessageId())
-                        .messageBytes(event.getMessageBytes())
-                        .createTime(System.currentTimeMillis())
-                        .build();
-                serverPublishMessageStoreService.put(subscribeStoreDTO.getClientId(), serverPublishMessageStoreDTO);
+                if (subscribeStoreDTO.getMqttQoS() > 0) {
+                    ServerPublishMessageStoreDTO serverPublishMessageStoreDTO = ServerPublishMessageStoreDTO.builder()
+                            .fromClientId(event.getClientId())
+                            .clientId(subscribeStoreDTO.getClientId())
+                            .topic(subscribeStoreDTO.getTopicFilter())
+                            .mqttQoS(subscribeStoreDTO.getMqttQoS())
+                            .messageId(internalMessageDTO.getMessageId())
+                            .messageBytes(event.getMessageBytes())
+                            .createTime(System.currentTimeMillis())
+                            .build();
+                    serverPublishMessageStoreService.put(subscribeStoreDTO.getClientId(), serverPublishMessageStoreDTO);
+                }
                 internalMessageService.internalPublish(internalMessageDTO);
             }
             return null;
@@ -169,28 +171,6 @@ public class CompositePublishService {
         }
         subscribeCache.put(topic, subscribeStoreDTOS);
         return subscribeStoreDTOS;
-    }
-
-    public Future<Void> send(ClientPublishMessageStoreDTO event) {
-        return wrapSemaphoreTask(() -> {
-            List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
-            if (subscribeStoreDTOS == null) return null;
-
-            for (SubscribeStoreDTO subscribeStoreDTO : subscribeStoreDTOS) {
-                InternalMessageDTO internalMessageDTO = InternalMessageDTO.builder()
-                        .messageBytes(event.getMessageBytes())
-                        .topic(event.getTopic())
-                        .retain(false)
-                        .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
-                        .toClientId(subscribeStoreDTO.getClientId())
-                        .mqttQoS(subscribeStoreDTO.getMqttQoS())
-                        .dup(false)
-                        .build();
-                internalMessageService.internalPublish(internalMessageDTO);
-            }
-            return null;
-        });
-
     }
 
 

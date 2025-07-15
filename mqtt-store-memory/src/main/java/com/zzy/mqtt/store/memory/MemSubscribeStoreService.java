@@ -25,6 +25,11 @@ public class MemSubscribeStoreService implements ISubscribeStoreService {
     }
 
     @Override
+    public SubscribeStoreDTO get(String topicFilter, String clientId) {
+        return null;
+    }
+
+    @Override
     public void removeForClient(String clientId) {
         subscribeStore.values().forEach(
                 map -> map.remove(clientId)

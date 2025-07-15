@@ -5,6 +5,7 @@ import com.zzy.mqtt.logic.service.transport.IClientStoreService;
 import com.zzy.mqtt.store.memory.*;
 import jakarta.annotation.Resource;
 import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +18,6 @@ public class IgniteStoreConfig {
 
     @Resource
     Ignite ignite;
-    @Resource(name = "messageIdCache")
-    IgniteCache<String, Long> messageIdCache;
 
     @Resource(name = "serverPublishMessageCache")
     IgniteCache<String, Map<Integer, ServerPublishMessageStoreDTO>> serverPublishMessageCache;
@@ -64,8 +63,7 @@ public class IgniteStoreConfig {
     public IMessageIdService messageIdService() {
         // Assuming you have a concrete implementation of IMessageIdService
         return new IgniteMessageIdService(
-                ignite,
-                messageIdCache
+                ignite
         );
     }
 

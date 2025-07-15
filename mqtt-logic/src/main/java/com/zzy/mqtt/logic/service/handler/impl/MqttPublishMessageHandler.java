@@ -2,6 +2,7 @@ package com.zzy.mqtt.logic.service.handler.impl;
 
 import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.entity.IMqttPublishMessage;
+import com.zzy.mqtt.logic.entity.codes.MqttPubRecRC;
 import com.zzy.mqtt.logic.service.handler.MessageHandler;
 import com.zzy.mqtt.logic.service.internal.CompositePublishService;
 import com.zzy.mqtt.logic.service.store.*;
@@ -9,6 +10,8 @@ import com.zzy.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+
+import static com.zzy.mqtt.logic.entity.codes.MqttPubAckRC.UNSPECIFIED_ERROR;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -29,11 +32,29 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
-
-        MqttLogic.getPublishService().submit(() -> {
-            // Call the inner handling logic
-            handleInner(event, transport);
-        });
+        try {
+            MqttLogic.getPublishService().submit(() -> {
+                // Call the inner handling logic
+                handleInner(event, transport);
+            });
+        } catch (Exception e) {
+            log.error("Error handling MQTT Publish Message: {}", event, e);
+            // Handle the exception appropriately, maybe send an error response or log it
+            switch (event.qosLevel()) {
+                case AT_MOST_ONCE:
+                    // For QoS 0, we don't need to send any response
+                    break;
+                case AT_LEAST_ONCE:
+                    // For QoS 1, we send a PUBACK
+                    transport.publishAcknowledge(event.messageId(),
+                            UNSPECIFIED_ERROR, null);
+                    break;
+                case EXACTLY_ONCE:
+                    // For QoS 2, we send a PUBREC
+                    transport.publishReceived(event.messageId(), MqttPubRecRC.UNSPECIFIED_ERROR, null);
+                    break;
+            }
+        }
 
     }
 
@@ -56,12 +77,8 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
             compositePublishService.storeClientPublishMessage(clientPublishMessageStoreDTO).get();
         }
 
-        if (event.qosLevel().value() == 1 && !event.isRetain()) {
+        if (event.qosLevel().value() < 2 && !event.isRetain()) {
             compositePublishService.storeServerPublishMessageAndSend(clientPublishMessageStoreDTO).get();
-        }
-
-        if (event.qosLevel().value() == 0 && !event.isRetain()) {
-            compositePublishService.send(clientPublishMessageStoreDTO).get();
         }
 
 

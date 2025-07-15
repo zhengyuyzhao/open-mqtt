@@ -80,7 +80,8 @@ public class MqttLogic {
                 serverPublishMessageStoreService,
                 clientPublishMessageStoreService,
                 compositePublishService,
-                transportLocalStoreService
+                transportLocalStoreService,
+                subscribeStoreService
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();
         connectionService = Executors.newVirtualThreadPerTaskExecutor();

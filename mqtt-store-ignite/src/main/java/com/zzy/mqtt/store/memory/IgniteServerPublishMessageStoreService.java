@@ -8,6 +8,8 @@ import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteTransactions;
 import org.apache.ignite.transactions.Transaction;
+import org.apache.ignite.transactions.TransactionConcurrency;
+import org.apache.ignite.transactions.TransactionIsolation;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +25,8 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
     @Override
     public void put(String clientId, ServerPublishMessageStoreDTO dupPublishMessageStoreDTO) {
         IgniteTransactions transactions = ignite.transactions();
-        try (Transaction tx = transactions.txStart()) {
+        try (Transaction tx = transactions.txStart(TransactionConcurrency.OPTIMISTIC,
+                TransactionIsolation.REPEATABLE_READ)) {
             Map<Integer, ServerPublishMessageStoreDTO> map = store.get(clientId);
             if (map == null) {
                 map = new HashMap<>();
@@ -49,7 +52,8 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
     @Override
     public void remove(String clientId, int messageId) {
         IgniteTransactions transactions = ignite.transactions();
-        try (Transaction tx = transactions.txStart()) {
+        try (Transaction tx = transactions.txStart(TransactionConcurrency.OPTIMISTIC,
+                TransactionIsolation.REPEATABLE_READ)) {
             Map<Integer, ServerPublishMessageStoreDTO> map = store.get(clientId);
             if (map != null) {
                 map.remove(messageId);

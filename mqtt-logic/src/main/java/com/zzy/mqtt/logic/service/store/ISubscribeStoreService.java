@@ -21,6 +21,8 @@ public interface ISubscribeStoreService {
 	 */
 	void remove(String topicFilter, String clientId);
 
+	SubscribeStoreDTO get(String topicFilter, String clientId);
+
 	/**
 	 * 删除clientId的订阅
 	 */

@@ -32,4 +32,6 @@ public class ServerPublishMessageStoreDTO implements Serializable {
 
 	private long createTime;
 
+	private int times = 0; // 重发次数
+
 }

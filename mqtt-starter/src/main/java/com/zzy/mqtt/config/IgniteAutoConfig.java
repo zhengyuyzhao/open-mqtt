@@ -14,10 +14,7 @@ import org.apache.ignite.cache.CacheAtomicityMode;
 import org.apache.ignite.cache.CacheMode;
 import org.apache.ignite.cache.PartitionLossPolicy;
 import org.apache.ignite.cluster.ClusterState;
-import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.ignite.configuration.DataRegionConfiguration;
-import org.apache.ignite.configuration.DataStorageConfiguration;
-import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.configuration.*;
 import org.apache.ignite.logger.slf4j.Slf4jLogger;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder;
@@ -84,6 +81,12 @@ public class IgniteAutoConfig {
         igniteConfiguration.setSnapshotPath(igniteProperties.getSnapshotPath());
         igniteConfiguration.setWorkDirectory(igniteProperties.getWorkPath());
         igniteConfiguration.setMetricsLogFrequency(0);
+
+        AtomicConfiguration atomicConfiguration = new AtomicConfiguration()
+                .setBackups(2)
+                .setCacheMode(CacheMode.PARTITIONED);
+
+        igniteConfiguration.setAtomicConfiguration(atomicConfiguration);
         // 非持久化数据区域
         DataRegionConfiguration notPersistence = new DataRegionConfiguration().setPersistenceEnabled(false)
                 .setInitialSize(igniteProperties.getNotPersistenceInitialSize() * 1024 * 1024)
