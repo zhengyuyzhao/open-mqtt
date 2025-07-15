@@ -123,14 +123,14 @@ public class DupMessageRetryScheduleService {
                 if (currentTransport == null) {
                     return;
                 }
-                ClientPublishMessageStoreDTO clientPublishMessageStoreDTO = clientPublishMessageStoreService
-                        .get(message.getFromClientId(), message.getMessageId());
-                if (clientPublishMessageStoreDTO == null) {
-                    serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
-                    return;
-                }
+//                ClientPublishMessageStoreDTO clientPublishMessageStoreDTO = clientPublishMessageStoreService
+//                        .get(message.getFromClientId(), message.getMessageId());
+//                if (clientPublishMessageStoreDTO == null) {
+//                    serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
+//                    return;
+//                }
 
-                currentTransport.publish(message.getTopic(), clientPublishMessageStoreDTO.getMessageBytes(),
+                currentTransport.publish(message.getTopic(), message.getMessageBytes(),
                         MqttQoS.valueOf(message.getMqttQoS()), true, false, message.getMessageId());
             });
         }

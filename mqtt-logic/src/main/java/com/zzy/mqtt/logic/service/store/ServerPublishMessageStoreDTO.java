@@ -28,7 +28,7 @@ public class ServerPublishMessageStoreDTO implements Serializable {
 
 	private int messageId;
 
-//	private byte[] messageBytes;
+	private byte[] messageBytes;
 
 	private long createTime;
 

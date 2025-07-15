@@ -72,7 +72,8 @@ public class MqttLogic {
                 serverPublishMessageStoreService,
                 subscribeStoreService,
                 messageIdService,
-                internalMessageService
+                internalMessageService,
+                mqttLogicConfig
         );
         dupMessageRetryScheduleService = new DupMessageRetryScheduleService(
                 mqttLogicConfig,
@@ -86,7 +87,7 @@ public class MqttLogic {
         publishService = Executors.newVirtualThreadPerTaskExecutor();
         publishProtocolService = Executors.newVirtualThreadPerTaskExecutor();
         publishReceiveService = Executors.newVirtualThreadPerTaskExecutor();
-        storeService = Executors.newWorkStealingPool(64);
+        storeService = Executors.newVirtualThreadPerTaskExecutor();
     }
 
 

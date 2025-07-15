@@ -12,4 +12,5 @@ public class MqttLogicConfig {
     private int dupMessageRetryInitialDelay = 200;
     private int dupMessageRetryMaxTimes = 3;
     private int serverPort = 1883;
+    private int publishTps  = 500; // 每秒发布消息的TPS
 }

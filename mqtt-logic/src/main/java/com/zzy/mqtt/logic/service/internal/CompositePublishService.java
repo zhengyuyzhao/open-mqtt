@@ -5,16 +5,19 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zzy.mqtt.logic.MqttLogic;
+import com.zzy.mqtt.logic.config.MqttLogicConfig;
 import com.zzy.mqtt.logic.service.store.*;
-import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 
 @Slf4j
-@RequiredArgsConstructor
 public class CompositePublishService {
 
     private final IClientPublishMessageStoreService clientPublishMessageStoreService;
@@ -22,23 +25,64 @@ public class CompositePublishService {
     private final ISubscribeStoreService subscribeStoreService;
     private final IMessageIdService messageIdService;
     private final IInternalMessageService internalMessageService;
+    private final MqttLogicConfig mqttLogicConfig;
+
+    private final Semaphore semaphore;
+    private final int acquireTimeoutMillis = 1000; // Default timeout for acquiring semaphore
+
+    public CompositePublishService(IClientPublishMessageStoreService clientPublishMessageStoreService,
+                                   IServerPublishMessageStoreService serverPublishMessageStoreService,
+                                   ISubscribeStoreService subscribeStoreService,
+                                   IMessageIdService messageIdService,
+                                   IInternalMessageService internalMessageService,
+                                   MqttLogicConfig mqttLogicConfig) {
+        this.clientPublishMessageStoreService = clientPublishMessageStoreService;
+        this.serverPublishMessageStoreService = serverPublishMessageStoreService;
+        this.subscribeStoreService = subscribeStoreService;
+        this.messageIdService = messageIdService;
+        this.internalMessageService = internalMessageService;
+        this.mqttLogicConfig = mqttLogicConfig;
+        semaphore = new Semaphore(mqttLogicConfig.getPublishTps());
+    }
+
     private final Cache<String, List<SubscribeStoreDTO>> subscribeCache =
             Caffeine.newBuilder()
                     .maximumSize(1000)
                     .expireAfterWrite(Duration.ofMillis(5000))
                     .build();
 
+
+    @SneakyThrows
+    private Future<Void> wrapSemaphoreTask(Callable<Void> task) {
+
+        if (semaphore.tryAcquire(acquireTimeoutMillis,
+                java.util.concurrent.TimeUnit.MILLISECONDS)) {
+            return MqttLogic.getStoreService().submit(() -> {
+                try {
+                    return task.call();
+                } finally {
+                    semaphore.release();
+                }
+            });
+        }
+
+        return CompletableFuture.failedFuture(new InterruptedException("Failed to acquire semaphore within timeout"));
+
+    }
+
+    @SneakyThrows
     public Future<Void> storeClientPublishMessage(ClientPublishMessageStoreDTO dto) {
         log.info("Storing client publish message: {}", dto);
-        return MqttLogic.getStoreService().submit(() -> {
+        return wrapSemaphoreTask(() -> {
             clientPublishMessageStoreService.put(dto.getClientId(), dto);
             return null;
         });
+
     }
 
     public Future<Void> storeClientPublishMessageAndSend(ClientPublishMessageStoreDTO dto) {
         log.info("Storing client publish message: {}", dto);
-        return MqttLogic.getStoreService().submit(() -> {
+        return wrapSemaphoreTask(() -> {
             clientPublishMessageStoreService.put(dto.getClientId(), dto);
             storeServerPublishMessageAndSend(dto);
             clientPublishMessageStoreService.remove(dto.getClientId(), dto.getMessageId());
@@ -47,7 +91,7 @@ public class CompositePublishService {
     }
 
     public Future<Void> storeServerPublishMessageAndSendByClientPublishMessage(String clientId, int messageId) {
-        return MqttLogic.getStoreService().submit(() -> {
+        return wrapSemaphoreTask(() -> {
             ClientPublishMessageStoreDTO clientPublishMessageStoreDTO =
                     clientPublishMessageStoreService.get(clientId, messageId);
             clientPublishMessageStoreDTO.setHandshakeOk(true);
@@ -81,7 +125,7 @@ public class CompositePublishService {
     public Future<Void> storeServerPublishMessageAndSend(ClientPublishMessageStoreDTO event) {
 
 
-        return MqttLogic.getStoreService().submit(() -> {
+        return wrapSemaphoreTask(() -> {
             List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
             if (subscribeStoreDTOS == null) return null;
 
@@ -101,6 +145,7 @@ public class CompositePublishService {
                         .topic(event.getTopic())
                         .mqttQoS(subscribeStoreDTO.getMqttQoS())
                         .messageId(internalMessageDTO.getMessageId())
+                        .messageBytes(event.getMessageBytes())
                         .createTime(System.currentTimeMillis())
                         .build();
                 serverPublishMessageStoreService.put(subscribeStoreDTO.getClientId(), serverPublishMessageStoreDTO);
@@ -127,7 +172,7 @@ public class CompositePublishService {
     }
 
     public Future<Void> send(ClientPublishMessageStoreDTO event) {
-        return MqttLogic.getStoreService().submit(() -> {
+        return wrapSemaphoreTask(() -> {
             List<SubscribeStoreDTO> subscribeStoreDTOS = getSubscribeStoreDTOS(event.getTopic());
             if (subscribeStoreDTOS == null) return null;
 
