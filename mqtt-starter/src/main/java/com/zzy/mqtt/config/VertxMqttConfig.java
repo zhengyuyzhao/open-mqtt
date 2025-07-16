@@ -7,10 +7,9 @@ import com.zzy.mqtt.broker.cluster.VertxClusterInternalMessageService;
 import com.zzy.mqtt.logic.MqttBroker;
 import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.service.internal.IInternalMessageService;
-import com.zzy.mqtt.logic.service.lock.IDistributeLock;
 import com.zzy.mqtt.logic.service.store.*;
-import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
+import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
 import com.zzy.mqtt.logic.service.transport.impl.DefaultTransportLocalStoreService;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.ignite.IgniteClusterManager;
@@ -52,9 +51,6 @@ public class VertxMqttConfig {
     @Resource
     IClientStoreService clientStoreService;
 
-    @Resource
-    IDistributeLock distributeLock;
-
 
     @Bean
     public ITransportLocalStoreService transportLocalStoreService() {
@@ -73,7 +69,6 @@ public class VertxMqttConfig {
     }
 
 
-
     @Bean
     public MqttLogic mqttLogic() {
         return MqttLogic.builder()
@@ -87,7 +82,6 @@ public class VertxMqttConfig {
                 .sessionStoreService(sessionStoreService)
                 .transportLocalStoreService(transportLocalStoreService())
                 .clientStoreService(clientStoreService)
-                .distributeLock(distributeLock)
                 .internalMessageService(internalMessageService()) // Replace with actual implementation if needed
                 .build();
     }
@@ -97,7 +91,7 @@ public class VertxMqttConfig {
     public ClusterManager clusterManager() {
         // Assuming you have a concrete implementation of ClusterManager
         // This is a placeholder, replace with actual cluster manager initialization
-        log.info("Initializing IgniteClusterManager with Ignite instance: {}", ignite.name());
+        log.debug("Initializing IgniteClusterManager with Ignite instance: {}", ignite.name());
         return new IgniteClusterManager(ignite);
     }
 

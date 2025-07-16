@@ -33,7 +33,7 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Subscribe Message: " + event);
-        log.info("Handling MQTT Subscribe Message: {}", event);
+        log.debug("Handling MQTT Subscribe Message: {}", event);
         MqttLogic.getExecutorService().submit(() -> this.handleSubscribe(event, transport));
 
     }
@@ -50,7 +50,7 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
                 SubscribeStoreDTO subscribeStoreDTO = new SubscribeStoreDTO(clientId, topicFilter, mqttQoS.value());
                 subscribeStoreService.put(topicFilter, subscribeStoreDTO);
                 mqttQoSList.add(mqttQoS);
-                log.info("SUBSCRIBE - clientId: {}, topFilter: {}, QoS: {}", clientId, topicFilter, mqttQoS.value());
+                log.debug("SUBSCRIBE - clientId: {}, topFilter: {}, QoS: {}", clientId, topicFilter, mqttQoS.value());
             });
             // 发布保留消息
             topicSubscriptions.forEach(topicSubscription -> {

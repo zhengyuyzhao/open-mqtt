@@ -3,7 +3,6 @@ package com.zzy.mqtt.logic.schedule;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.zzy.mqtt.logic.config.MqttLogicConfig;
 import com.zzy.mqtt.logic.service.internal.CompositePublishService;
-import com.zzy.mqtt.logic.service.lock.IDistributeLock;
 import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 @Slf4j
 public class DupMessageRetryScheduleService {
@@ -33,7 +31,6 @@ public class DupMessageRetryScheduleService {
     private final ScheduledExecutorService serverMessagescheduledExecutorService;
     private final ScheduledExecutorService clientMessagescheduledExecutorService;
 
-    private final IDistributeLock distributeLock;
 
     private final long resendDelay = 15000; // 重发延迟时间，单位毫秒
     private final int resendTimes = 3; // 重发次数
@@ -43,15 +40,13 @@ public class DupMessageRetryScheduleService {
                                           IClientPublishMessageStoreService clientPublishMessageStoreService,
                                           CompositePublishService compositePublishService,
                                           ITransportLocalStoreService transportLocalStoreService,
-                                          ISubscribeStoreService subscribeStoreService,
-                                          IDistributeLock distributeLock) {
+                                          ISubscribeStoreService subscribeStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.serverPublishMessageStoreService = serverPublishMessageStoreService;
         this.clientPublishMessageStoreService = clientPublishMessageStoreService;
         this.transportLocalStoreService = transportLocalStoreService;
         this.compositePublishService = compositePublishService;
         this.subscribeStoreService = subscribeStoreService;
-        this.distributeLock = distributeLock;
         this.serverMessagescheduledExecutorService = new ScheduledThreadPoolExecutor(
                 mqttLogicConfig.getDupMessageRetryThreadPoolSize(),
                 new ThreadFactoryBuilder().setNamePrefix("server-message-retry").build()
@@ -134,7 +129,7 @@ public class DupMessageRetryScheduleService {
                 }
 
 
-                log.info("Sending duplicate message: {}, topic: {}, qos: {}, messageId: {}",
+                log.debug("Sending duplicate message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
                 ITransport currentTransport = transportLocalStoreService.getTransport(transport.clientIdentifier());
                 if (currentTransport == null) {
@@ -178,7 +173,7 @@ public class DupMessageRetryScheduleService {
                 if (clientPublishMessageStoreService.get(message.getClientId(), message.getMessageId()) == null) {
                     return;
                 }
-                log.info("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
+                log.debug("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
                 compositePublishService.storeServerPublishMessageAndSend(message);
                 clientPublishMessageStoreService.remove(message.getClientId(), message.getMessageId());

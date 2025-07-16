@@ -74,7 +74,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     @Override
     public void internalPublish(InternalMessageDTO internalMessageDTO) {
-        log.info("Publishing internal message: {}", internalMessageDTO);
+        log.debug("Publishing internal message: {}", internalMessageDTO);
         executorService.execute(() -> {
             publishInner(internalMessageDTO);
         });
@@ -87,7 +87,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
         if (transportLocalStoreService.getTransport(internalMessageDTO.getToClientId()) != null) {
             // If the transport exists, publish to the specific broker
-            log.info("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
+            log.debug("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
             internalSubscribe(internalMessageDTO);
             return;
         }
@@ -95,7 +95,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
         String broker = getTransportBroker(internalMessageDTO.getToClientId());
         if (StrUtil.isNotEmpty(broker)) {
             // If the transport exists in the store, publish to the specific broker
-            log.info("Publishing internal message to specific broker to broker: {}", broker);
+            log.debug("Publishing internal message to specific broker to broker: {}", broker);
             eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
         } else {
             eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, objectMapper.writeValueAsString(internalMessageDTO));
@@ -106,7 +106,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 //        String broker = transportStoreService.getBroker(internalMessageDTO.getClientId());
 //        if (!StringUtil.isNullOrEmpty(broker)) {
 //            // If the transport exists in the store, publish to the specific broker
-//            log.info("Publishing internal message to specific broker from store: {}", broker);
+//            log.debug("Publishing internal message to specific broker from store: {}", broker);
 //            eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, json);
 //            return;
 //        }
@@ -121,7 +121,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 if (!StringUtil.isNullOrEmpty(internalMessageDTO.getToClientId())) {
                     ITransport transport = transportLocalStoreService.getTransport(internalMessageDTO.getToClientId());
                     if (transport != null) {
-                        log.info("Transport Topic:{} to clientId: {}， message;{}", internalMessageDTO.getTopic(),
+                        log.debug("Transport Topic:{} to clientId: {}， message;{}", internalMessageDTO.getTopic(),
                                 internalMessageDTO.getToClientId(), internalMessageDTO);
                         transport.publish(internalMessageDTO.getTopic(),
                                 internalMessageDTO.getMessageBytes(),
@@ -176,7 +176,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 log.error("Error processing internal message {}", e);
             }
         });
-        log.info("Registered internal message listener");
+        log.debug("Registered internal message listener");
         consumerMap.put(INTERNAL_MESSAGE_TOPIC_PREFIX, consumer);
         consumerMap.put(INTERNAL_MESSAGE_TOPIC_PREFIX + brokerId, point2PointConsumer);
     }
@@ -186,7 +186,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 //        MessageConsumer consumer = consumerMap.remove(topic);
 //        if (consumer != null) {
 //            consumer.unregister();
-//            log.info("Unregistered internal message listener for topic: {}", topic);
+//            log.debug("Unregistered internal message listener for topic: {}", topic);
 //        } else {
 //            log.warn("No internal message listener found for topic: {}", topic);
 //        }

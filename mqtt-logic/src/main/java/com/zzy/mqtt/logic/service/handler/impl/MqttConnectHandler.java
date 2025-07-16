@@ -83,7 +83,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
 //    private void sendDupMessage(ITransport transport) {
 //        // 发送重复发布的消息
 //        List<ClientPublishMessageStoreDTO> messages = dupPublishMessageStoreService.get(transport.clientIdentifier());
-//        log.info("Sending duplicate messages for clientId: {}, messages: {}", transport.clientIdentifier(), messages);
+//        log.debug("Sending duplicate messages for clientId: {}, messages: {}", transport.clientIdentifier(), messages);
 //        if (messages != null && !messages.isEmpty()) {
 //            messages.forEach(message -> {
 //                transport.publish(message.getTopic(), message.getMessageBytes(),

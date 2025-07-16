@@ -59,7 +59,7 @@ public class CompositePublishService {
 
     @SneakyThrows
     public Future<Void> storeClientPublishMessage(ClientPublishMessageStoreDTO dto) {
-        log.info("Storing client publish message: {}", dto);
+        log.debug("Storing client publish message: {}", dto);
         return wrapSemaphoreTask(() -> {
             clientPublishMessageStoreService.put(dto.getClientId(), dto);
             return null;
@@ -68,7 +68,7 @@ public class CompositePublishService {
     }
 
     public Future<Void> storeClientPublishMessageAndSend(ClientPublishMessageStoreDTO dto) {
-        log.info("Storing client publish message: {}", dto);
+        log.debug("Storing client publish message: {}", dto);
         return wrapSemaphoreTask(() -> {
             clientPublishMessageStoreService.put(dto.getClientId(), dto);
             storeServerPublishMessageAndSend(dto);
@@ -83,7 +83,7 @@ public class CompositePublishService {
                     clientPublishMessageStoreService.get(clientId, messageId);
             clientPublishMessageStoreDTO.setHandshakeOk(true);
             clientPublishMessageStoreService.put(clientId, clientPublishMessageStoreDTO);
-            log.info("Storing server publish message and sending by client publish message: {}, {}", clientId, messageId);
+            log.debug("Storing server publish message and sending by client publish message: {}, {}", clientId, messageId);
             storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
             clientPublishMessageStoreService.remove(clientId, messageId);
             return null;
@@ -153,7 +153,7 @@ public class CompositePublishService {
         }
         List<SubscribeStoreDTO> subscribeStoreDTOS = subscribeStoreService.search(topic);
         if (CollectionUtil.isEmpty(subscribeStoreDTOS)) {
-            log.info("No subscribers found for topic: {}", topic);
+            log.debug("No subscribers found for topic: {}", topic);
             return null;
         }
         subscribeCache.put(topic, subscribeStoreDTOS);

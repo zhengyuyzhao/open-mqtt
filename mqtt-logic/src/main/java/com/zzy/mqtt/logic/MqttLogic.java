@@ -34,7 +34,7 @@ public class MqttLogic {
 
     private final CompositePublishService compositePublishService;
 
-    private final IDistributeLock distributeLock;
+//    private final IDistributeLock distributeLock;
 
     private static ExecutorService executorService;
     private static ExecutorService connectionService;
@@ -58,8 +58,7 @@ public class MqttLogic {
                      ITransportLocalStoreService transportLocalStoreService,
                      IInternalMessageService internalMessageService,
                      IClientStoreService clientStoreService,
-                     IClientPublishMessageStoreService clientPublishMessageStoreService,
-                     IDistributeLock distributeLock) {
+                     IClientPublishMessageStoreService clientPublishMessageStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.authService = authService;
         this.serverPublishMessageStoreService = serverPublishMessageStoreService;
@@ -79,15 +78,13 @@ public class MqttLogic {
                 internalMessageService,
                 mqttLogicConfig
         );
-        this.distributeLock = distributeLock;
         dupMessageRetryScheduleService = new DupMessageRetryScheduleService(
                 mqttLogicConfig,
                 serverPublishMessageStoreService,
                 clientPublishMessageStoreService,
                 compositePublishService,
                 transportLocalStoreService,
-                subscribeStoreService,
-                distributeLock
+                subscribeStoreService
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();
         connectionService = Executors.newVirtualThreadPerTaskExecutor();

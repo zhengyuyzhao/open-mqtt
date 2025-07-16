@@ -75,12 +75,14 @@ public class IgniteAutoConfig {
         igniteConfiguration.setSystemThreadPoolSize(igniteProperties.getSystemThreadPoolSize());
         igniteConfiguration.setQueryThreadPoolSize(igniteProperties.getQueryThreadPoolSize());
         igniteConfiguration.setServiceThreadPoolSize(igniteProperties.getServiceThreadPoolSize());
+
+
         // Ignite日志
         Logger logger = LoggerFactory.getLogger("org.apache.ignite");
         igniteConfiguration.setGridLogger(new Slf4jLogger(logger));
         igniteConfiguration.setSnapshotPath(igniteProperties.getSnapshotPath());
         igniteConfiguration.setWorkDirectory(igniteProperties.getWorkPath());
-        igniteConfiguration.setMetricsLogFrequency(0);
+        igniteConfiguration.setMetricsLogFrequency(60000);
 
         AtomicConfiguration atomicConfiguration = new AtomicConfiguration()
                 .setBackups(2)
@@ -100,9 +102,10 @@ public class IgniteAutoConfig {
         DataStorageConfiguration dataStorageConfiguration = new DataStorageConfiguration()
                 .setDefaultDataRegionConfiguration(notPersistence)
                 .setDataRegionConfigurations(persistence)
-                .setCdcWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() : null)
-                .setWalArchivePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() : null)
-                .setWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() : null)
+                .setWalSegmentSize(1024 * 1024 * 1024)
+                .setCdcWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/cdc" : null)
+                .setWalArchivePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/wal": null)
+                .setWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath()+ "/wal" : null)
                 .setStoragePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() : null);
         igniteConfiguration.setDataStorageConfiguration(dataStorageConfiguration);
         // 集群, 基于组播或静态IP配置
@@ -128,20 +131,7 @@ public class IgniteAutoConfig {
         return ignite;
     }
 
-    private static void cleanVertxClusterCache() throws IOException {
-        String tmpDir = System.getProperty("java.io.tmpdir", ".");
-        File tmpFile = new File(tmpDir);
-        Files.list(tmpFile.toPath())
-                .filter(path -> path.toString().contains("vertx-cache"))
-                .forEachOrdered(path -> {
-                    log.info("Deleting vertx cluster cache file: {}", path);
-                    try {
-                        Files.deleteIfExists(path);
-                    } catch (Exception e) {
-                        log.error("Failed to delete vertx cluster cache file: {}", path, e);
-                    }
-                });
-    }
+
 
 
 

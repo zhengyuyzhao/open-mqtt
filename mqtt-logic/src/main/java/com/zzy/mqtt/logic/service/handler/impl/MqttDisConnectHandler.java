@@ -14,7 +14,10 @@ import com.zzy.mqtt.logic.service.transport.ITransport;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 @AllArgsConstructor
 public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
     private final ITransportLocalStoreService transportLocalStoreService;
@@ -26,19 +29,20 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
     @SneakyThrows
     @Override
     public void handle(ITransport transport) {
-
+        log.info("处理断开连接, clientId: {}, cleanSession: {}",
+                transport.clientIdentifier(), transport.isCleanSession());
         MqttLogic.getConnectionService().submit(() -> {
 
             try {
                 handleInner(transport);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                log.error("处理断开连接异常, clientId: {}, error: {}", transport.clientIdentifier(), e.getMessage(), e);
             }
         });
 
     }
 
-    private void handleInner(ITransport transport) throws Exception {
+    private void handleInner(ITransport transport) {
         transportLocalStoreService.removeTransport(transport.clientIdentifier());
         SessionStoreDTO sessionStoreDTO = sessionStoreService.get(transport.clientIdentifier());
         if (sessionStoreDTO != null) {

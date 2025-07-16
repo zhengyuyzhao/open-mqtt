@@ -19,7 +19,7 @@ public class AppLifeCycle implements ApplicationRunner, DisposableBean {
     public void destroy() throws Exception {
         mqttBroker.stop();
         // Clean up resources or configurations here
-        log.info("Application is shutting down.");
+        log.debug("Application is shutting down.");
     }
 
     @Override
