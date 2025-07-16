@@ -47,7 +47,6 @@ public class IgniteStoreConfig {
     public IServerPublishMessageStoreService serverPublishMessageStoreService() {
         // Assuming you have a concrete implementation of IDupPublishMessageStoreService
         return new IgniteServerPublishMessageStoreService(
-                ignite,
                 serverPublishMessageCache
         );
     }
@@ -56,7 +55,6 @@ public class IgniteStoreConfig {
     public IClientPublishMessageStoreService clientPublishMessageStoreService() {
         // Assuming you have a concrete implementation of IDupPublishMessageStoreService
         return new IgniteClientPublishMessageStoreService(
-                ignite,
                 clientPublishMessageCache
         );
     }

@@ -15,7 +15,6 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public class IgniteClientPublishMessageStoreService implements IClientPublishMessageStoreService<ClientPublishMessageStoreDTO> {
-    private final Ignite ignite;
     private final IgniteCache<String, ClientPublishMessageStoreDTO> store;
     private String INFIX = "-";
 
