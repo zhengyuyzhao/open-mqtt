@@ -3,6 +3,7 @@ package com.zzy.mqtt.logic.schedule;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.zzy.mqtt.logic.config.MqttLogicConfig;
 import com.zzy.mqtt.logic.service.internal.CompositePublishService;
+import com.zzy.mqtt.logic.service.lock.IDistributeLock;
 import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 @Slf4j
 public class DupMessageRetryScheduleService {
@@ -31,6 +33,8 @@ public class DupMessageRetryScheduleService {
     private final ScheduledExecutorService serverMessagescheduledExecutorService;
     private final ScheduledExecutorService clientMessagescheduledExecutorService;
 
+    private final IDistributeLock distributeLock;
+
     private final long resendDelay = 15000; // 重发延迟时间，单位毫秒
     private final int resendTimes = 3; // 重发次数
 
@@ -39,13 +43,15 @@ public class DupMessageRetryScheduleService {
                                           IClientPublishMessageStoreService clientPublishMessageStoreService,
                                           CompositePublishService compositePublishService,
                                           ITransportLocalStoreService transportLocalStoreService,
-                                          ISubscribeStoreService subscribeStoreService) {
+                                          ISubscribeStoreService subscribeStoreService,
+                                          IDistributeLock distributeLock) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.serverPublishMessageStoreService = serverPublishMessageStoreService;
         this.clientPublishMessageStoreService = clientPublishMessageStoreService;
         this.transportLocalStoreService = transportLocalStoreService;
         this.compositePublishService = compositePublishService;
         this.subscribeStoreService = subscribeStoreService;
+        this.distributeLock = distributeLock;
         this.serverMessagescheduledExecutorService = new ScheduledThreadPoolExecutor(
                 mqttLogicConfig.getDupMessageRetryThreadPoolSize(),
                 new ThreadFactoryBuilder().setNamePrefix("server-message-retry").build()
@@ -77,16 +83,18 @@ public class DupMessageRetryScheduleService {
         };
 
         Runnable clientTask = () -> {
-            Iterator<ITransport> iterator = transportLocalStoreService.list().iterator();
-            while (iterator.hasNext()) {
-                ITransport transport = iterator.next();
-
-                try {
-                    sendClientDupMessage(transport);
-                } catch (Exception e) {
-                    log.error("Error during retrying duplicate publish messages for transport: {}", transport.clientIdentifier(), e);
-                }
+            Lock lock = distributeLock.getLock("client-dup-message-retry");
+            try {
+                lock.lock();
+                // 发送客户端的重复发布消息
+                sendClientDupMessage();
+            } catch (Exception e) {
+                log.error("Error during retrying duplicate client messages", e);
+            } finally {
+                lock.unlock();
             }
+
+
         };
         serverMessagescheduledExecutorService.scheduleWithFixedDelay(serverTask,
                 mqttLogicConfig.getDupMessageRetryInitialDelay(),
@@ -119,7 +127,7 @@ public class DupMessageRetryScheduleService {
                     return;
                 }
 
-                if (message.getTimes() > resendTimes ) {
+                if (message.getTimes() > resendTimes) {
                     log.warn("Message {} has been retried {} times, removing from store", message.getMessageId(), message.getTimes());
                     serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
                     return;
@@ -155,10 +163,9 @@ public class DupMessageRetryScheduleService {
         }
     }
 
-    private void sendClientDupMessage(ITransport transport) {
+    private void sendClientDupMessage() {
         // 发送重复发布的消息
-        List<ClientPublishMessageStoreDTO> messages = clientPublishMessageStoreService.get(transport.clientIdentifier());
-        log.debug("Retrying duplicate publish messages for transport: {}, messages: {}", transport.clientIdentifier(), messages);
+        List<ClientPublishMessageStoreDTO> messages = clientPublishMessageStoreService.getAll();
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
                 if (!message.isHandshakeOk()) {
@@ -168,7 +175,7 @@ public class DupMessageRetryScheduleService {
                     return;
                 }
 
-                if (clientPublishMessageStoreService.get(transport.clientIdentifier(), message.getMessageId()) == null) {
+                if (clientPublishMessageStoreService.get(message.getClientId(), message.getMessageId()) == null) {
                     return;
                 }
                 log.info("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",

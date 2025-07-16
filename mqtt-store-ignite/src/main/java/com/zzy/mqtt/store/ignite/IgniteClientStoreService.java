@@ -1,4 +1,4 @@
-package com.zzy.mqtt.store.memory;
+package com.zzy.mqtt.store.ignite;
 
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
 import lombok.RequiredArgsConstructor;

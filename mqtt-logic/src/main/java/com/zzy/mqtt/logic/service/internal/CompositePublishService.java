@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
@@ -55,19 +54,7 @@ public class CompositePublishService {
     @SneakyThrows
     private Future<Void> wrapSemaphoreTask(Callable<Void> task) {
 
-        if (semaphore.tryAcquire(acquireTimeoutMillis,
-                java.util.concurrent.TimeUnit.MILLISECONDS)) {
-            return MqttLogic.getStoreService().submit(() -> {
-                try {
-                    return task.call();
-                } finally {
-                    semaphore.release();
-                }
-            });
-        }
-
-        return CompletableFuture.failedFuture(new InterruptedException("Failed to acquire semaphore within timeout"));
-
+        return MqttLogic.getStoreService().submit(() -> task.call());
     }
 
     @SneakyThrows

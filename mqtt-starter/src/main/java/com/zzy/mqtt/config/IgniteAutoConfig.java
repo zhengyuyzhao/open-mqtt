@@ -83,7 +83,7 @@ public class IgniteAutoConfig {
         igniteConfiguration.setMetricsLogFrequency(0);
 
         AtomicConfiguration atomicConfiguration = new AtomicConfiguration()
-                .setBackups(2)
+                .setBackups(1)
                 .setCacheMode(CacheMode.PARTITIONED);
 
         igniteConfiguration.setAtomicConfiguration(atomicConfiguration);
@@ -143,25 +143,14 @@ public class IgniteAutoConfig {
                 });
     }
 
-    @Bean
-    public IgniteCache messageIdCache() throws Exception {
-        CacheConfiguration cacheConfiguration = new CacheConfiguration()
-                .setDataRegionName(PERSISTENCE_DATA_REGION)
-                .setCacheMode(CacheMode.PARTITIONED)
-                .setBackups(2)
-                .setReadFromBackup(false)
-                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
-                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
-                .setName("messageIdCache");
-        return ignite().getOrCreateCache(cacheConfiguration);
-    }
+
 
     @Bean
     public IgniteCache retainMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
-                .setBackups(2)
+                .setBackups(1)
                 .setReadFromBackup(false)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
@@ -201,7 +190,7 @@ public class IgniteAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
-                .setBackups(2)
+                .setBackups(1)
                 .setReadFromBackup(false)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
@@ -211,11 +200,25 @@ public class IgniteAutoConfig {
     }
 
     @Bean
+    public IgniteCache lockCache() throws Exception {
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setDataRegionName(PERSISTENCE_DATA_REGION)
+                .setBackups(1)
+                .setReadFromBackup(false)
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setName("lockCache");
+        return ignite().getOrCreateCache(cacheConfiguration);
+    }
+
+    @Bean
     public IgniteCache serverPublishMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
-                .setBackups(2)
+                .setBackups(1)
                 .setReadFromBackup(false)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
@@ -229,7 +232,7 @@ public class IgniteAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
-                .setBackups(2)
+                .setBackups(1)
                 .setReadFromBackup(false)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
@@ -246,7 +249,7 @@ public class IgniteAutoConfig {
                 .setReadFromBackup(false)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
-                .setBackups(2)
+                .setBackups(1)
 //                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("transportCache");
         return ignite().getOrCreateCache(cacheConfiguration);

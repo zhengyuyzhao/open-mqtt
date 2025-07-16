@@ -1,4 +1,4 @@
-package com.zzy.mqtt.store.memory;
+package com.zzy.mqtt.store.ignite;
 
 import cn.hutool.core.util.StrUtil;
 import com.zzy.mqtt.logic.primitive.TopicUtils;

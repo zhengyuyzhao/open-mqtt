@@ -2,10 +2,9 @@ package com.zzy.mqtt.config;
 
 import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
-import com.zzy.mqtt.store.memory.*;
+import com.zzy.mqtt.store.ignite.*;
 import jakarta.annotation.Resource;
 import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteAtomicLong;
 import org.apache.ignite.IgniteCache;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,10 +19,10 @@ public class IgniteStoreConfig {
     Ignite ignite;
 
     @Resource(name = "serverPublishMessageCache")
-    IgniteCache<String, Map<Integer, ServerPublishMessageStoreDTO>> serverPublishMessageCache;
+    IgniteCache<String, ServerPublishMessageStoreDTO> serverPublishMessageCache;
 
     @Resource(name = "clientPublishMessageCache")
-    IgniteCache<String, Map<Integer, ClientPublishMessageStoreDTO>> clientPublishMessageCache;
+    IgniteCache<String, ClientPublishMessageStoreDTO> clientPublishMessageCache;
 
 
     @Resource(name = "retainMessageCache")
@@ -31,6 +30,9 @@ public class IgniteStoreConfig {
 
     @Resource(name = "sessionCache")
     IgniteCache<String, SessionStoreDTO> sessionCache;
+
+    @Resource(name = "lockCache")
+    IgniteCache<String, Integer> lockCache;
 
     @Resource(name = "subscribeCache")
     IgniteCache<String, Map<String, SubscribeStoreDTO>> subscribeCache;
@@ -98,6 +100,14 @@ public class IgniteStoreConfig {
         // Assuming you have a concrete implementation of ITransportLocalStoreService
         return new IgniteClientStoreService(
                 transportCache
+        );
+    }
+
+    @Bean
+    public IgniteLockService igniteLockService() {
+        // Assuming you have a concrete implementation of IDistributeLock
+        return new IgniteLockService(
+                lockCache
         );
     }
 

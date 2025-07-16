@@ -7,6 +7,7 @@ import com.zzy.mqtt.broker.cluster.VertxClusterInternalMessageService;
 import com.zzy.mqtt.logic.MqttBroker;
 import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.service.internal.IInternalMessageService;
+import com.zzy.mqtt.logic.service.lock.IDistributeLock;
 import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
@@ -51,6 +52,9 @@ public class VertxMqttConfig {
     @Resource
     IClientStoreService clientStoreService;
 
+    @Resource
+    IDistributeLock distributeLock;
+
 
     @Bean
     public ITransportLocalStoreService transportLocalStoreService() {
@@ -83,6 +87,7 @@ public class VertxMqttConfig {
                 .sessionStoreService(sessionStoreService)
                 .transportLocalStoreService(transportLocalStoreService())
                 .clientStoreService(clientStoreService)
+                .distributeLock(distributeLock)
                 .internalMessageService(internalMessageService()) // Replace with actual implementation if needed
                 .build();
     }

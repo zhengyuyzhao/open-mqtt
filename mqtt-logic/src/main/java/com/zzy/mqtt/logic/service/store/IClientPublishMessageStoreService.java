@@ -25,6 +25,8 @@ public interface IClientPublishMessageStoreService<T extends ClientPublishMessag
 
     List<T> get(String clientId);
 
+    List<T> getAll();
+
     /**
      * 删除消息
      */

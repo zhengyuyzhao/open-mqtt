@@ -1,4 +1,4 @@
-package com.zzy.mqtt.store.memory;
+package com.zzy.mqtt.store.ignite;
 
 import com.zzy.mqtt.logic.service.store.ISessionStoreService;
 import com.zzy.mqtt.logic.service.store.SessionStoreDTO;

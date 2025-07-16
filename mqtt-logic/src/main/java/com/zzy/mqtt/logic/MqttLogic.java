@@ -7,6 +7,7 @@ import com.zzy.mqtt.logic.service.auth.IAuthService;
 import com.zzy.mqtt.logic.service.handler.impl.*;
 import com.zzy.mqtt.logic.service.internal.CompositePublishService;
 import com.zzy.mqtt.logic.service.internal.IInternalMessageService;
+import com.zzy.mqtt.logic.service.lock.IDistributeLock;
 import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -33,6 +34,8 @@ public class MqttLogic {
 
     private final CompositePublishService compositePublishService;
 
+    private final IDistributeLock distributeLock;
+
     private static ExecutorService executorService;
     private static ExecutorService connectionService;
     private static ExecutorService publishService;
@@ -55,7 +58,8 @@ public class MqttLogic {
                      ITransportLocalStoreService transportLocalStoreService,
                      IInternalMessageService internalMessageService,
                      IClientStoreService clientStoreService,
-                     IClientPublishMessageStoreService clientPublishMessageStoreService) {
+                     IClientPublishMessageStoreService clientPublishMessageStoreService,
+                     IDistributeLock distributeLock) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.authService = authService;
         this.serverPublishMessageStoreService = serverPublishMessageStoreService;
@@ -75,13 +79,15 @@ public class MqttLogic {
                 internalMessageService,
                 mqttLogicConfig
         );
+        this.distributeLock = distributeLock;
         dupMessageRetryScheduleService = new DupMessageRetryScheduleService(
                 mqttLogicConfig,
                 serverPublishMessageStoreService,
                 clientPublishMessageStoreService,
                 compositePublishService,
                 transportLocalStoreService,
-                subscribeStoreService
+                subscribeStoreService,
+                distributeLock
         );
         executorService = Executors.newVirtualThreadPerTaskExecutor();
         connectionService = Executors.newVirtualThreadPerTaskExecutor();
