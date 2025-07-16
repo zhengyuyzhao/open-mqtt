@@ -83,17 +83,17 @@ public class DupMessageRetryScheduleService {
         };
 
         Runnable clientTask = () -> {
-            Lock lock = distributeLock.getLock("client-dup-message-retry");
-            try {
-                lock.lock();
-                // 发送客户端的重复发布消息
-                sendClientDupMessage();
-            } catch (Exception e) {
-                log.error("Error during retrying duplicate client messages", e);
-            } finally {
-                lock.unlock();
-            }
-
+//            Lock lock = distributeLock.getLock("client-dup-message-retry");
+//            try {
+//                lock.lock();
+//                // 发送客户端的重复发布消息
+//                sendClientDupMessage();
+//            } catch (Exception e) {
+//                log.error("Error during retrying duplicate client messages", e);
+//            } finally {
+//                lock.unlock();
+//            }
+            sendClientDupMessage();
 
         };
         serverMessagescheduledExecutorService.scheduleWithFixedDelay(serverTask,

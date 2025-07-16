@@ -37,7 +37,7 @@ public class IgniteClientPublishMessageStoreService implements IClientPublishMes
 
     @Override
     public List<ClientPublishMessageStoreDTO> get(String clientId) {
-        IgniteBiPredicate<String, ClientPublishMessageStoreDTO> filter = (key, p) -> p.getClientId() == clientId;
+        IgniteBiPredicate<String, ClientPublishMessageStoreDTO> filter = (key, p) -> clientId.equals(p.getClientId());
         List<ClientPublishMessageStoreDTO> result = new ArrayList<>();
         try (QueryCursor<Cache.Entry<String, ClientPublishMessageStoreDTO>> qryCursor
                      = store.query(new ScanQuery<>(filter))) {
@@ -50,8 +50,11 @@ public class IgniteClientPublishMessageStoreService implements IClientPublishMes
     @Override
     public List<ClientPublishMessageStoreDTO> getAll() {
         List<ClientPublishMessageStoreDTO> result = new ArrayList<>();
+        ScanQuery<String, ClientPublishMessageStoreDTO> scanQuery = new ScanQuery<>();
+        scanQuery.setPageSize(100);
+        scanQuery.setLocal(true);
         try (QueryCursor<Cache.Entry<String, ClientPublishMessageStoreDTO>> qryCursor
-                     = store.query(new ScanQuery<>())) {
+                     = store.query(scanQuery)) {
             qryCursor.forEach(
                     entry -> result.add(entry.getValue()));
         }
@@ -65,7 +68,7 @@ public class IgniteClientPublishMessageStoreService implements IClientPublishMes
 
     @Override
     public void removeByClient(String clientId) {
-        IgniteBiPredicate<String, ClientPublishMessageStoreDTO> filter = (key, p) -> p.getClientId() == clientId;
+        IgniteBiPredicate<String, ClientPublishMessageStoreDTO> filter = (key, p) -> clientId.equals(p.getClientId());
         try (QueryCursor<Cache.Entry<String, ClientPublishMessageStoreDTO>> qryCursor
                      = store.query(new ScanQuery<>(filter))) {
             qryCursor.forEach(

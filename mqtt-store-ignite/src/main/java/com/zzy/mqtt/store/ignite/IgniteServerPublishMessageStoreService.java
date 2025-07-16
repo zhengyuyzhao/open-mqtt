@@ -28,8 +28,11 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
 
     @Override
     public List<ServerPublishMessageStoreDTO> get(String clientId) {
-        IgniteBiPredicate<String, ServerPublishMessageStoreDTO> filter = (key, p) -> p.getClientId() == clientId;
+        IgniteBiPredicate<String, ServerPublishMessageStoreDTO> filter = (key, p) -> clientId.equals(p.getClientId());
         List<ServerPublishMessageStoreDTO> result = new ArrayList<>();
+        ScanQuery<String, ServerPublishMessageStoreDTO> scanQuery = new ScanQuery<>();
+        scanQuery.setFilter(filter);
+        scanQuery.setPageSize(100);
         try (QueryCursor<Cache.Entry<String, ServerPublishMessageStoreDTO>> qryCursor
                      = store.query(new ScanQuery<>(filter))) {
             qryCursor.forEach(
@@ -51,7 +54,7 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
 
     @Override
     public void removeByClient(String clientId) {
-        IgniteBiPredicate<String, ServerPublishMessageStoreDTO> filter = (key, p) -> p.getClientId() == clientId;
+        IgniteBiPredicate<String, ServerPublishMessageStoreDTO> filter = (key, p) -> clientId.equals(p.getClientId());
         try (QueryCursor<Cache.Entry<String, ServerPublishMessageStoreDTO>> qryCursor
                      = store.query(new ScanQuery<>(filter))) {
             qryCursor.forEach(
