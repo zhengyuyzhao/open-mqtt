@@ -60,5 +60,7 @@ public class IgniteProperties {
 
 	private int serviceThreadPoolSize = 16;
 
+	private int publishTps = 5000;
+
 
 }

@@ -88,7 +88,7 @@ public class IgniteAutoConfig {
         );
 
         TcpCommunicationSpi communicationSpi = new TcpCommunicationSpi();
-        communicationSpi.setMessageQueueLimit(1000);
+        communicationSpi.setMessageQueueLimit(igniteProperties.getPublishTps());
 
         igniteConfiguration.setCommunicationSpi(communicationSpi);
 
