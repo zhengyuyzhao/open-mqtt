@@ -13,7 +13,7 @@ public class IgniteMessageIdService implements IMessageIdService {
     @Override
     public int getNextMessageId(String clientId) {
         IgniteAtomicLong count = ignite.atomicLong(clientId, 1, true);
-        return (int) (count.incrementAndGet() % 65535);
+        return (int) ((count.incrementAndGet() % 65530 + 65530) % 65530) + 1;
     }
 
 

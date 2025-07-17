@@ -16,9 +16,12 @@ import org.apache.ignite.cache.PartitionLossPolicy;
 import org.apache.ignite.cluster.ClusterState;
 import org.apache.ignite.configuration.*;
 import org.apache.ignite.logger.slf4j.Slf4jLogger;
+import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+import org.apache.ignite.spi.metric.jmx.JmxMetricExporterSpi;
+import org.apache.ignite.spi.metric.log.LogExporterSpi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -27,9 +30,6 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.cache.expiry.AccessedExpiryPolicy;
 import javax.cache.expiry.Duration;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Arrays;
 
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
@@ -76,13 +76,21 @@ public class IgniteAutoConfig {
         igniteConfiguration.setQueryThreadPoolSize(igniteProperties.getQueryThreadPoolSize());
         igniteConfiguration.setServiceThreadPoolSize(igniteProperties.getServiceThreadPoolSize());
 
-
         // Ignite日志
         Logger logger = LoggerFactory.getLogger("org.apache.ignite");
         igniteConfiguration.setGridLogger(new Slf4jLogger(logger));
         igniteConfiguration.setSnapshotPath(igniteProperties.getSnapshotPath());
         igniteConfiguration.setWorkDirectory(igniteProperties.getWorkPath());
         igniteConfiguration.setMetricsLogFrequency(60000);
+        igniteConfiguration.setMetricExporterSpi(
+                new JmxMetricExporterSpi(),
+                new LogExporterSpi()
+        );
+
+        TcpCommunicationSpi communicationSpi = new TcpCommunicationSpi();
+        communicationSpi.setMessageQueueLimit(1000);
+
+        igniteConfiguration.setCommunicationSpi(communicationSpi);
 
         AtomicConfiguration atomicConfiguration = new AtomicConfiguration()
                 .setBackups(2)
@@ -98,15 +106,22 @@ public class IgniteAutoConfig {
         DataRegionConfiguration persistence = new DataRegionConfiguration().setPersistenceEnabled(true)
                 .setInitialSize(igniteProperties.getPersistenceInitialSize() * 1024 * 1024)
                 .setMaxSize(igniteProperties.getPersistenceMaxSize() * 1024 * 1024)
+                .setMetricsEnabled(true)
                 .setName(PERSISTENCE_DATA_REGION);
         DataStorageConfiguration dataStorageConfiguration = new DataStorageConfiguration()
                 .setDefaultDataRegionConfiguration(notPersistence)
                 .setDataRegionConfigurations(persistence)
                 .setWalSegmentSize(1024 * 1024 * 1024)
+                .setMetricsEnabled(true)
+                .setWriteThrottlingEnabled(true)
                 .setCdcWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/cdc" : null)
-                .setWalArchivePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/wal": null)
-                .setWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath()+ "/wal" : null)
+                .setWalArchivePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/wal" : null)
+                .setWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/wal" : null)
                 .setStoragePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() : null);
+
+        dataStorageConfiguration.getDefaultDataRegionConfiguration()
+                .setCheckpointPageBufferSize(1024 * 1024 * 1024);
+
         igniteConfiguration.setDataStorageConfiguration(dataStorageConfiguration);
         // 集群, 基于组播或静态IP配置
         TcpDiscoverySpi tcpDiscoverySpi = new TcpDiscoverySpi();
@@ -132,9 +147,6 @@ public class IgniteAutoConfig {
     }
 
 
-
-
-
     @Bean
     public IgniteCache retainMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
@@ -145,6 +157,7 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+                .setStatisticsEnabled(true)
                 .setName("retainMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -158,6 +171,7 @@ public class IgniteAutoConfig {
                 .setWriteSynchronizationMode(FULL_SYNC)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setStatisticsEnabled(true)
                 .setName("subscribeCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -171,6 +185,7 @@ public class IgniteAutoConfig {
                 .setWriteSynchronizationMode(FULL_SYNC)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setStatisticsEnabled(true)
                 .setName("subscribeWildCardCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -185,23 +200,25 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+                .setStatisticsEnabled(true)
                 .setName("sessionCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
-    @Bean
-    public IgniteCache lockCache() throws Exception {
-        CacheConfiguration cacheConfiguration = new CacheConfiguration()
-                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
-                .setDataRegionName(PERSISTENCE_DATA_REGION)
-                .setBackups(2)
-                .setReadFromBackup(false)
-                .setCacheMode(CacheMode.PARTITIONED)
-                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
-                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
-                .setName("lockCache");
-        return ignite().getOrCreateCache(cacheConfiguration);
-    }
+//    @Bean
+//    public IgniteCache lockCache() throws Exception {
+//        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+//                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+//                .setDataRegionName(PERSISTENCE_DATA_REGION)
+//                .setBackups(2)
+//                .setReadFromBackup(false)
+//                .setCacheMode(CacheMode.PARTITIONED)
+//                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
+//                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+//                .setStatisticsEnabled(true)
+//                .setName("lockCache");
+//        return ignite().getOrCreateCache(cacheConfiguration);
+//    }
 
     @Bean
     public IgniteCache serverPublishMessageCache() throws Exception {
@@ -213,6 +230,7 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+                .setStatisticsEnabled(true)
                 .setName("serverPublishMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -227,6 +245,7 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
+                .setStatisticsEnabled(true)
                 .setName("clientPublishMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -240,6 +259,7 @@ public class IgniteAutoConfig {
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setBackups(2)
+                .setStatisticsEnabled(true)
 //                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("transportCache");
         return ignite().getOrCreateCache(cacheConfiguration);
