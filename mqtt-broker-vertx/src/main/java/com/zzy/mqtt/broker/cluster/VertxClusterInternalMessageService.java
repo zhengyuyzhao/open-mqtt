@@ -155,13 +155,13 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     }
 
     private String getTransportBroker(String clientId) {
-//        if (transportBrokerCache.getIfPresent(clientId) != null) {
-//            return transportBrokerCache.getIfPresent(clientId);
-//        }
+        if (transportBrokerCache.getIfPresent(clientId) != null) {
+            return transportBrokerCache.getIfPresent(clientId);
+        }
         String broker = transportStoreService.getBroker(clientId);
-//        if (StrUtil.isNotEmpty(broker)) {
-//            transportBrokerCache.put(clientId, broker);
-//        }
+        if (StrUtil.isNotEmpty(broker)) {
+            transportBrokerCache.put(clientId, broker);
+        }
 
         return broker;
     }

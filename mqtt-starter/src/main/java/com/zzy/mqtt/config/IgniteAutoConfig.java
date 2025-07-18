@@ -253,10 +253,12 @@ public class IgniteAutoConfig {
     @Bean
     public IgniteCache transportCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
-                .setReadFromBackup(true)
-                .setCacheMode(CacheMode.REPLICATED)
-                .setWriteSynchronizationMode(FULL_SYNC)
+                .setReadFromBackup(false)
+                .setCacheMode(CacheMode.PARTITIONED)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
+                .setBackups(igniteProperties.getBackup())
                 .setStatisticsEnabled(true)
 //                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setName("transportCache");

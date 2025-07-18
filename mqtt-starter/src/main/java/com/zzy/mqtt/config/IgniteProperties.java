@@ -48,7 +48,7 @@ public class IgniteProperties {
 	/**
 	 * 非持久化缓存占用内存最大值(MB), 默认值: 128
 	 */
-	private int notPersistenceMaxSize = 1024;
+	private int notPersistenceMaxSize = 128;
 
 	private int systemThreadPoolSize = 16;
 
