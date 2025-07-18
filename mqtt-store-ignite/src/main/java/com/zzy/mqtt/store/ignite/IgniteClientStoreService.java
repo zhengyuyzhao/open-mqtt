@@ -10,7 +10,7 @@ public class IgniteClientStoreService implements IClientStoreService {
 
     @Override
     public String getBroker(String clientId) {
-        return store.get(clientId);
+        return store.localPeek(clientId);
     }
 
     @Override

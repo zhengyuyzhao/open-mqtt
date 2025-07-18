@@ -71,7 +71,7 @@ public class CompositePublishService {
         log.debug("Storing client publish message: {}", dto);
         return wrapSemaphoreTask(() -> {
             clientPublishMessageStoreService.put(dto.getClientId(), dto);
-            storeServerPublishMessageAndSend(dto);
+            storeServerPublishMessageAndSend(dto).get();
             clientPublishMessageStoreService.remove(dto.getClientId(), dto.getMessageId());
             return null;
         });
@@ -84,7 +84,7 @@ public class CompositePublishService {
             clientPublishMessageStoreDTO.setHandshakeOk(true);
             clientPublishMessageStoreService.put(clientId, clientPublishMessageStoreDTO);
             log.debug("Storing server publish message and sending by client publish message: {}, {}", clientId, messageId);
-            storeServerPublishMessageAndSend(clientPublishMessageStoreDTO);
+            storeServerPublishMessageAndSend(clientPublishMessageStoreDTO).get();
             clientPublishMessageStoreService.remove(clientId, messageId);
             return null;
         });

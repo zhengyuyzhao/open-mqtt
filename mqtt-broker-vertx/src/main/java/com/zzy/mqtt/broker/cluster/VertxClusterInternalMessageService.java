@@ -80,7 +80,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                 publishInner(internalMessageDTO);
             });
         } catch (Exception e) {
-            log.error("Error publishing internal message: {}", internalMessageDTO, e);
+            log.error("Error publishing internal message: {}", internalMessageDTO);
         }
 
 
@@ -88,21 +88,31 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     @SneakyThrows
     private void publishInner(InternalMessageDTO internalMessageDTO) {
-
-
+        String broker = getTransportBroker(internalMessageDTO.getToClientId());
+        log.error("==== publishInner");
+        long time = System.currentTimeMillis();
         if (transportLocalStoreService.getTransport(internalMessageDTO.getToClientId()) != null) {
             // If the transport exists, publish to the specific broker
             log.debug("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
             internalSubscribe(internalMessageDTO);
             return;
         }
+        long time1 = System.currentTimeMillis();
+        log.error("==== publishInner 1" + (time1 - time));
 
-        String broker = getTransportBroker(internalMessageDTO.getToClientId());
+
+
+        long time2 = System.currentTimeMillis();
+        log.error("==== publishInner 2" + (time2 - time1));
+
         if (StrUtil.isNotEmpty(broker)) {
             // If the transport exists in the store, publish to the specific broker
             log.debug("Publishing internal message to specific broker to broker: {}", broker);
             eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
         }
+
+        long time3 = System.currentTimeMillis();
+        log.error("==== publishInner 3" + (time3 - time2));
 //        else {
 //            eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, objectMapper.writeValueAsString(internalMessageDTO));
 //        }
@@ -147,20 +157,21 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
                     log.error("Internal message without clientId: {}", internalMessageDTO);
                 }
             } catch (Exception e) {
-                log.error("Error processing internal message: {}", internalMessageDTO, e);
+                log.error("Error processing internal message: {}", e.getMessage());
             }
         });
 
     }
 
     private String getTransportBroker(String clientId) {
-        if (transportBrokerCache.getIfPresent(clientId) != null) {
-            return transportBrokerCache.getIfPresent(clientId);
-        }
+//        if (transportBrokerCache.getIfPresent(clientId) != null) {
+//            return transportBrokerCache.getIfPresent(clientId);
+//        }
         String broker = transportStoreService.getBroker(clientId);
-        if (StrUtil.isNotEmpty(broker)) {
-            transportBrokerCache.put(clientId, broker);
-        }
+//        if (StrUtil.isNotEmpty(broker)) {
+//            transportBrokerCache.put(clientId, broker);
+//        }
+
         return broker;
     }
 

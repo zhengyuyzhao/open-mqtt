@@ -36,7 +36,7 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
             try {
                 handleInner(transport);
             } catch (Exception e) {
-                log.error("处理断开连接异常, clientId: {}, error: {}", transport.clientIdentifier(), e.getMessage(), e);
+                log.error("处理断开连接异常, clientId: {}, error: {}", transport.clientIdentifier(), e.getMessage());
             }
         });
 

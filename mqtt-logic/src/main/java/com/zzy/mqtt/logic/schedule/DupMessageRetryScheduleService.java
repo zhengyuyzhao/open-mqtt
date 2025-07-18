@@ -72,7 +72,7 @@ public class DupMessageRetryScheduleService {
                     }
                     sendDupMessage(transport);
                 } catch (Exception e) {
-                    log.error("Error during retrying duplicate publish messages for transport: {}", transport.clientIdentifier(), e);
+                    log.error("Error during retrying duplicate publish messages for transport: {}", transport.clientIdentifier());
                 }
             }
         };
@@ -175,8 +175,14 @@ public class DupMessageRetryScheduleService {
                 }
                 log.debug("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
-                compositePublishService.storeServerPublishMessageAndSend(message);
-                clientPublishMessageStoreService.remove(message.getClientId(), message.getMessageId());
+                try {
+                    compositePublishService.storeServerPublishMessageAndSend(message).get();
+                    clientPublishMessageStoreService.remove(message.getClientId(), message.getMessageId());
+                } catch (Exception e) {
+                    log.error("Error sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
+                            message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
+                }
+
 
             });
 

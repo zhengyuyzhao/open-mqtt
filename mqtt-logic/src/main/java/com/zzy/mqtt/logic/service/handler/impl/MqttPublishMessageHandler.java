@@ -38,7 +38,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
                 handleInner(event, transport);
             });
         } catch (Exception e) {
-            log.error("Error handling MQTT Publish Message: {}", event, e);
+            log.error("Error handling MQTT Publish Message: {}", event);
             // Handle the exception appropriately, maybe send an error response or log it
             switch (event.qosLevel()) {
                 case AT_MOST_ONCE:
