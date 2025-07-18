@@ -88,22 +88,14 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     @SneakyThrows
     private void publishInner(InternalMessageDTO internalMessageDTO) {
-        String broker = getTransportBroker(internalMessageDTO.getToClientId());
-        log.error("==== publishInner");
-        long time = System.currentTimeMillis();
         if (transportLocalStoreService.getTransport(internalMessageDTO.getToClientId()) != null) {
             // If the transport exists, publish to the specific broker
             log.debug("Publishing internal message to local broker client: {}", internalMessageDTO.getToClientId());
             internalSubscribe(internalMessageDTO);
             return;
         }
-        long time1 = System.currentTimeMillis();
-        log.error("==== publishInner 1" + (time1 - time));
 
-
-
-        long time2 = System.currentTimeMillis();
-        log.error("==== publishInner 2" + (time2 - time1));
+        String broker = getTransportBroker(internalMessageDTO.getToClientId());
 
         if (StrUtil.isNotEmpty(broker)) {
             // If the transport exists in the store, publish to the specific broker
@@ -111,8 +103,7 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
             eb.send(INTERNAL_MESSAGE_TOPIC_PREFIX + broker, objectMapper.writeValueAsString(internalMessageDTO));
         }
 
-        long time3 = System.currentTimeMillis();
-        log.error("==== publishInner 3" + (time3 - time2));
+
 //        else {
 //            eb.publish(INTERNAL_MESSAGE_TOPIC_PREFIX, objectMapper.writeValueAsString(internalMessageDTO));
 //        }
