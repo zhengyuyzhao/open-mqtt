@@ -26,14 +26,23 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
     private final CompositeStoreService compositeStoreService;
 
 
-    @SneakyThrows
+//    @SneakyThrows
     @Override
     public void handle(IMqttSubscribeMessage event, ITransport transport) {
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Subscribe Message: " + event);
         log.debug("Handling MQTT Subscribe Message: {}", event);
-        MqttLogic.getProtocolService().submit(() -> this.handleSubscribe(event, transport));
+        MqttLogic.getProtocolService().submit(() ->
+                {
+                    try {
+
+                    this.handleSubscribe(event, transport);
+                    } catch (Exception e) {
+                        log.error("处理订阅消息异常, clientId: {}, error: {}", transport.clientIdentifier(), e.getMessage());
+                    }
+                }
+        );
 
     }
 
@@ -51,13 +60,14 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
                 mqttQoSList.add(mqttQoS);
                 log.debug("SUBSCRIBE - clientId: {}, topFilter: {}, QoS: {}", clientId, topicFilter, mqttQoS.value());
             });
+
+            transport.subscribeAcknowledge(event.messageId(), mqttQoSList);
             // 发布保留消息
             topicSubscriptions.forEach(topicSubscription -> {
                 String topicFilter = topicSubscription.topicName();
                 MqttQoS mqttQoS = topicSubscription.qualityOfService();
                 this.sendRetainMessage(transport, topicFilter, mqttQoS);
             });
-            transport.subscribeAcknowledge(event.messageId(), mqttQoSList);
         } else {
             List<MqttSubAckRC> subAckRCS = topicSubscriptions.stream().map(
                     topicSubscription -> MqttSubAckRC.TOPIC_FILTER_INVALID
@@ -89,6 +99,10 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
     private void sendRetainMessage(ITransport transport, String topicFilter, MqttQoS mqttQoS) {
         List<RetainMessageStoreDTO> retainMessageStoreDTOS =
                 compositeStoreService.searchRetainStore(topicFilter).get();
+        if (retainMessageStoreDTOS == null || retainMessageStoreDTOS.isEmpty()) {
+            log.debug("No retain messages found for topicFilter: {}", topicFilter);
+            return;
+        }
         retainMessageStoreDTOS.forEach(retainMessageStoreDTO -> {
             MqttQoS respQoS = retainMessageStoreDTO.getMqttQoS() > mqttQoS.value() ? mqttQoS : MqttQoS.valueOf(retainMessageStoreDTO.getMqttQoS());
             Integer messageId = null;

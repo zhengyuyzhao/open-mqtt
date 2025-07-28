@@ -19,7 +19,6 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
     private final ITransportLocalStoreService transportLocalStoreService;
     private final CompositeStoreService compositeStoreService;
 
-    @SneakyThrows
     @Override
     public void handle(ITransport transport) {
         log.info("处理断开连接, clientId: {}, cleanSession: {}",
