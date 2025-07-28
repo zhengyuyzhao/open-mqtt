@@ -36,6 +36,8 @@ public class MqttLogic {
 
     private static ExecutorService protocolService;
 
+    private static ExecutorService connectService;
+
     private static ExecutorService storeService;
 
 
@@ -81,6 +83,7 @@ public class MqttLogic {
                 subscribeStoreService
         );
 
+        connectService = Executors.newVirtualThreadPerTaskExecutor();
         protocolService = Executors.newVirtualThreadPerTaskExecutor();
         storeService = new ThreadPoolExecutor(
                 10,
@@ -109,6 +112,9 @@ public class MqttLogic {
     private MqttSubscribeMessageHandler mqttSubscribeHandler;
     private MqttUnSubscribeMessageHandler mqttUnSubscribeHandler;
 
+    public static ExecutorService getConnectService() {
+        return connectService;
+    }
 
     public static ExecutorService getStoreService() {
         return storeService;
