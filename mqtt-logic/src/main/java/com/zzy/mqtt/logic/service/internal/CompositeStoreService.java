@@ -7,6 +7,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.config.MqttLogicConfig;
 import com.zzy.mqtt.logic.service.store.*;
+import com.zzy.mqtt.logic.service.transport.IClientStoreService;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,35 +16,23 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
 
 @Slf4j
-public class CompositePublishService {
+@RequiredArgsConstructor
+public class CompositeStoreService {
 
     private final IClientPublishMessageStoreService clientPublishMessageStoreService;
     private final IServerPublishMessageStoreService serverPublishMessageStoreService;
     private final ISubscribeStoreService subscribeStoreService;
     private final IMessageIdService messageIdService;
+
+    private final ISessionStoreService sessionStoreService;
+
+    private final IClientStoreService clientStoreService;
     private final IInternalMessageService internalMessageService;
+    private final IRetainMessageStoreService retainMessageStoreService;
     private final MqttLogicConfig mqttLogicConfig;
 
-    private final Semaphore semaphore;
-    private final int acquireTimeoutMillis = 1000; // Default timeout for acquiring semaphore
-
-    public CompositePublishService(IClientPublishMessageStoreService clientPublishMessageStoreService,
-                                   IServerPublishMessageStoreService serverPublishMessageStoreService,
-                                   ISubscribeStoreService subscribeStoreService,
-                                   IMessageIdService messageIdService,
-                                   IInternalMessageService internalMessageService,
-                                   MqttLogicConfig mqttLogicConfig) {
-        this.clientPublishMessageStoreService = clientPublishMessageStoreService;
-        this.serverPublishMessageStoreService = serverPublishMessageStoreService;
-        this.subscribeStoreService = subscribeStoreService;
-        this.messageIdService = messageIdService;
-        this.internalMessageService = internalMessageService;
-        this.mqttLogicConfig = mqttLogicConfig;
-        semaphore = new Semaphore(mqttLogicConfig.getPublishTps());
-    }
 
     private final Cache<String, List<SubscribeStoreDTO>> subscribeCache =
             Caffeine.newBuilder()
@@ -56,6 +46,105 @@ public class CompositePublishService {
 
         return MqttLogic.getStoreService().submit(() -> task.call());
     }
+
+    @SneakyThrows
+    private <T extends Object> Future<T> wrapSemaphoreTaskWithValue(Callable<T> task) {
+
+        return MqttLogic.getStoreService().submit(() -> task.call());
+    }
+
+    @SneakyThrows
+    public Future<Void> putRetainStore(String topic, RetainMessageStoreDTO storeDTO) {
+        return wrapSemaphoreTask(() -> {
+            retainMessageStoreService.put(topic, storeDTO);
+            return null;
+        });
+
+    }
+
+    @SneakyThrows
+    public Future<Integer> getNextMessageId(String clientId) {
+        return wrapSemaphoreTaskWithValue(() -> {
+            messageIdService.getNextMessageId(clientId);
+            return null;
+        });
+
+    }
+
+    @SneakyThrows
+    public Future<List<RetainMessageStoreDTO>> searchRetainStore(String topic) {
+        return wrapSemaphoreTaskWithValue(() -> {
+            retainMessageStoreService.search(topic);
+            return null;
+        });
+
+    }
+
+    @SneakyThrows
+    public Future<SessionStoreDTO> getSessionStore(String clientId) {
+        return wrapSemaphoreTaskWithValue(() -> sessionStoreService.get(clientId));
+
+    }
+
+    @SneakyThrows
+    public Future<Void> putSessionStore(String clientId, SessionStoreDTO storeDTO) {
+        return wrapSemaphoreTask(() -> {
+            sessionStoreService.put(clientId, storeDTO);
+            return null;
+        });
+
+    }
+
+    @SneakyThrows
+    public Future<Void> removeSessionStore(String clientId) {
+        return wrapSemaphoreTask(() -> {
+            sessionStoreService.remove(clientId);
+            return null;
+        });
+
+    }
+
+    public Future<Void> putClientStore(String clientId, String brokerId) {
+        return wrapSemaphoreTask(() -> {
+            clientStoreService.putClient(clientId, brokerId);
+            return null;
+        });
+    }
+
+    public Future<Void> removeClientStore(String clientId) {
+        return wrapSemaphoreTask(() -> {
+            clientStoreService.removeClient(clientId);
+            return null;
+        });
+    }
+
+    @SneakyThrows
+    public Future<Void> removeSubscribeStoreForClient(String clientId) {
+        return wrapSemaphoreTask(() -> {
+            subscribeStoreService.removeForClient(clientId);
+            return null;
+        });
+
+    }
+
+    @SneakyThrows
+    public Future<Void> putSubscribeStore(String topic, SubscribeStoreDTO storeDTO) {
+        return wrapSemaphoreTask(() -> {
+            subscribeStoreService.put(topic, storeDTO);
+            return null;
+        });
+
+    }
+
+    @SneakyThrows
+    public Future<Void> removeSubscribeStore(String topic, String clientId) {
+        return wrapSemaphoreTask(() -> {
+            subscribeStoreService.remove(topic, clientId);
+            return null;
+        });
+
+    }
+
 
     @SneakyThrows
     public Future<Void> storeClientPublishMessage(ClientPublishMessageStoreDTO dto) {
@@ -73,6 +162,13 @@ public class CompositePublishService {
             clientPublishMessageStoreService.put(dto.getClientId(), dto);
             storeServerPublishMessageAndSend(dto).get();
             clientPublishMessageStoreService.remove(dto.getClientId(), dto.getMessageId());
+            return null;
+        });
+    }
+
+    public Future<Void> removeServerPublishStore(String clientId, int messageId) {
+        return wrapSemaphoreTask(() -> {
+            serverPublishMessageStoreService.remove(clientId, messageId);
             return null;
         });
     }

@@ -3,7 +3,7 @@ package com.zzy.mqtt.logic.service.handler.impl;
 import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.entity.IMqttPubAckMessage;
 import com.zzy.mqtt.logic.service.handler.MessageHandler;
-import com.zzy.mqtt.logic.service.store.IServerPublishMessageStoreService;
+import com.zzy.mqtt.logic.service.internal.CompositeStoreService;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage> {
-    private final IServerPublishMessageStoreService serverPublishMessageStoreService;
+    private final CompositeStoreService compositeStoreService;
 
 
     @SneakyThrows
@@ -22,17 +22,18 @@ public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage>
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getPublishProtocolService().submit(() -> {
+        MqttLogic.getProtocolService().submit(() -> {
             handleInner(event, transport);
         });
     }
 
+    @SneakyThrows
     private void handleInner(IMqttPubAckMessage event, ITransport transport) {
         log.debug("Handling MQTT PubAck Message: {}", event.messageId());
-        MqttLogic.getPublishService().submit(() -> {
-            // Remove the message from the server publish message store
-            serverPublishMessageStoreService.remove(transport.clientIdentifier(), event.messageId());
-        });
+        compositeStoreService.removeServerPublishStore(
+                transport.clientIdentifier(),
+                event.messageId()
+        ).get();
     }
 
 

@@ -5,29 +5,21 @@ import com.zzy.mqtt.logic.entity.IMqttAuth;
 import com.zzy.mqtt.logic.entity.MqttWill;
 import com.zzy.mqtt.logic.service.auth.IAuthService;
 import com.zzy.mqtt.logic.service.handler.ConnectHandler;
-import com.zzy.mqtt.logic.service.store.ClientPublishMessageStoreDTO;
-import com.zzy.mqtt.logic.service.store.IServerPublishMessageStoreService;
-import com.zzy.mqtt.logic.service.store.ISessionStoreService;
+import com.zzy.mqtt.logic.service.internal.CompositeStoreService;
 import com.zzy.mqtt.logic.service.store.SessionStoreDTO;
-import com.zzy.mqtt.logic.service.transport.IClientStoreService;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
-import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
 public class MqttConnectHandler implements ConnectHandler<ITransport> {
     private final IAuthService authService;
     private final ITransportLocalStoreService transportLocalStoreService;
-    private final ISessionStoreService sessionStoreService;
-    private final IServerPublishMessageStoreService dupPublishMessageStoreService;
-    private final IClientStoreService clientStoreService;
+    private final CompositeStoreService compositeStoreService;
     private final String brokerId;
 
 
@@ -35,10 +27,13 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
     @Override
     public void handle(ITransport transport) {
 
-        MqttLogic.getConnectionService().execute(() -> this.handleInner(transport));
+        MqttLogic.getProtocolService().execute(() ->
+                this.handleInner(transport)
+        );
 
     }
 
+    @SneakyThrows
     private void handleInner(ITransport transport) {
         IMqttAuth auth = transport.auth();
 //        if (auth == null || auth.getUsername() == null || auth.getPassword() == null) {
@@ -60,8 +55,8 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
                 log.error("Error closing existing transport for clientId: {}", transport.clientIdentifier());
             }
         }
-        SessionStoreDTO sessionStoreDTO = sessionStoreService.get(transport.clientIdentifier());
-        transport.accept(sessionStoreDTO != null);
+        SessionStoreDTO sessionStoreDTO = compositeStoreService
+                .getSessionStore(transport.clientIdentifier()).get();
 
 
         if (transport.isCleanSession() || sessionStoreDTO == null) {
@@ -71,12 +66,14 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
                     .cleanSession(transport.isCleanSession())
                     .willMessage(MqttWill.of(transport.will()))
                     .build();
-            sessionStoreService.put(transport.clientIdentifier(), sessionStoreDTO);
+            compositeStoreService.putSessionStore(transport.clientIdentifier(), sessionStoreDTO).get();
         }
 //        sendDupMessage(transport);
 
-        clientStoreService.putClient(transport.clientIdentifier(), brokerId);
+        compositeStoreService.putClientStore(transport.clientIdentifier(), brokerId).get();
         transportLocalStoreService.putTransport(transport.clientIdentifier(), transport);
+
+        transport.accept(sessionStoreDTO != null);
 
     }
 

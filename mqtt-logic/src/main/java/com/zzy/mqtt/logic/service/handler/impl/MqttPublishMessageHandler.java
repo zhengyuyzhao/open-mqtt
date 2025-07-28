@@ -4,8 +4,9 @@ import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.entity.IMqttPublishMessage;
 import com.zzy.mqtt.logic.entity.codes.MqttPubRecRC;
 import com.zzy.mqtt.logic.service.handler.MessageHandler;
-import com.zzy.mqtt.logic.service.internal.CompositePublishService;
-import com.zzy.mqtt.logic.service.store.*;
+import com.zzy.mqtt.logic.service.internal.CompositeStoreService;
+import com.zzy.mqtt.logic.service.store.ClientPublishMessageStoreDTO;
+import com.zzy.mqtt.logic.service.store.RetainMessageStoreDTO;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -17,13 +18,8 @@ import static com.zzy.mqtt.logic.entity.codes.MqttPubAckRC.UNSPECIFIED_ERROR;
 @RequiredArgsConstructor
 public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMessage> {
 
-    private final ISessionStoreService sessionStoreService;
 
-
-    private final IRetainMessageStoreService retainMessageStoreService;
-
-
-    private final CompositePublishService compositePublishService;
+    private final CompositeStoreService compositeStoreService;
 
 
     @SneakyThrows
@@ -33,7 +29,7 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
         try {
-            MqttLogic.getPublishService().submit(() -> {
+            MqttLogic.getProtocolService().submit(() -> {
                 // Call the inner handling logic
                 handleInner(event, transport);
             });
@@ -74,44 +70,47 @@ public class MqttPublishMessageHandler implements MessageHandler<IMqttPublishMes
 
 
         if (event.qosLevel().value() == 2 && !event.isRetain()) {
-            compositePublishService.storeClientPublishMessage(clientPublishMessageStoreDTO).get();
+            compositeStoreService.storeClientPublishMessage(clientPublishMessageStoreDTO).get();
         }
 
         if (event.qosLevel().value() < 2 && !event.isRetain()) {
-            compositePublishService.storeServerPublishMessageAndSend(clientPublishMessageStoreDTO).get();
+            compositeStoreService.storeServerPublishMessageAndSend(clientPublishMessageStoreDTO).get();
         }
 
 
-        String clientId = transport.clientIdentifier();
+//        String clientId = transport.clientIdentifier();
 
         // publish 延长session失效时间
-        if (sessionStoreService.containsKey(clientId)) {
-            SessionStoreDTO sessionStoreDTO = sessionStoreService.get(clientId);
-            sessionStoreService.expire(clientId, sessionStoreDTO.getExpire());
-        }
+//        if (sessionStoreService.containsKey(clientId)) {
+//            SessionStoreDTO sessionStoreDTO = sessionStoreService.get(clientId);
+//            sessionStoreService.expire(clientId, sessionStoreDTO.getExpire());
+//        }
 
         if (event.isRetain()) {
             byte[] messageBytes = event.payload();
-            retainMessageStoreService.put(event.topicName(), RetainMessageStoreDTO.builder()
-                    .topic(event.topicName())
-                    .messageBytes(messageBytes)
-                    .mqttQoS(event.qosLevel().value())
-                    .build());
+            compositeStoreService.putRetainStore(
+                    event.topicName(),
+                    RetainMessageStoreDTO.builder()
+                            .topic(event.topicName())
+                            .messageBytes(messageBytes)
+                            .mqttQoS(event.qosLevel().value())
+                            .build()
+            ).get();
         }
 
-        MqttLogic.getPublishProtocolService().submit(() -> {
-            // Store the message in the server publish message store
-            switch (event.qosLevel()) {
 
-                case AT_LEAST_ONCE:
-                    transport.publishAcknowledge(event.messageId());
-                    break;
+        // Store the message in the server publish message store
+        switch (event.qosLevel()) {
 
-                case EXACTLY_ONCE:
-                    transport.publishReceived(event.messageId());
-                    break;
-            }
-        });
+            case AT_LEAST_ONCE:
+                transport.publishAcknowledge(event.messageId());
+                break;
+
+            case EXACTLY_ONCE:
+                transport.publishReceived(event.messageId());
+                break;
+        }
+
 
     }
 

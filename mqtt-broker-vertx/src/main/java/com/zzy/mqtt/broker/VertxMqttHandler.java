@@ -21,6 +21,9 @@ public class VertxMqttHandler extends VerticleBase {
     @Override
     public Future<?> start() throws Exception {
         this.mqttServer = MqttServer.create(vertx);
+        mqttServer.exceptionHandler(throwable -> {
+            log.error("MQTT server exception: {}", throwable.getMessage());
+        });
         mqttServer.endpointHandler(endpoint -> {
             endpoint.subscriptionAutoAck(false);
             endpoint.publishAutoAck(false);

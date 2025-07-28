@@ -13,7 +13,7 @@ public class MqttAuthHandler implements ConnectHandler<ITransport> {
     @Override
     public void handle(ITransport transport) {
 
-        MqttLogic.getExecutorService().submit(() -> this.handleInner(transport));
+        MqttLogic.getProtocolService().submit(() -> this.handleInner(transport));
 
     }
 

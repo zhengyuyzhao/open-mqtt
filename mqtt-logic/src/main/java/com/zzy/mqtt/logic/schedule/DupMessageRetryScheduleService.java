@@ -2,7 +2,7 @@ package com.zzy.mqtt.logic.schedule;
 
 import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.zzy.mqtt.logic.config.MqttLogicConfig;
-import com.zzy.mqtt.logic.service.internal.CompositePublishService;
+import com.zzy.mqtt.logic.service.internal.CompositeStoreService;
 import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -22,7 +22,7 @@ public class DupMessageRetryScheduleService {
 
     private final IClientPublishMessageStoreService clientPublishMessageStoreService;
 
-    private final CompositePublishService compositePublishService;
+    private final CompositeStoreService compositeStoreService;
     private final ITransportLocalStoreService transportLocalStoreService;
 
     private final ISubscribeStoreService subscribeStoreService;
@@ -38,14 +38,14 @@ public class DupMessageRetryScheduleService {
     public DupMessageRetryScheduleService(MqttLogicConfig mqttLogicConfig,
                                           IServerPublishMessageStoreService serverPublishMessageStoreService,
                                           IClientPublishMessageStoreService clientPublishMessageStoreService,
-                                          CompositePublishService compositePublishService,
+                                          CompositeStoreService compositeStoreService,
                                           ITransportLocalStoreService transportLocalStoreService,
                                           ISubscribeStoreService subscribeStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.serverPublishMessageStoreService = serverPublishMessageStoreService;
         this.clientPublishMessageStoreService = clientPublishMessageStoreService;
         this.transportLocalStoreService = transportLocalStoreService;
-        this.compositePublishService = compositePublishService;
+        this.compositeStoreService = compositeStoreService;
         this.subscribeStoreService = subscribeStoreService;
         this.serverMessagescheduledExecutorService = new ScheduledThreadPoolExecutor(
                 mqttLogicConfig.getDupMessageRetryThreadPoolSize(),
@@ -176,7 +176,7 @@ public class DupMessageRetryScheduleService {
                 log.debug("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
                 try {
-                    compositePublishService.storeServerPublishMessageAndSend(message).get();
+                    compositeStoreService.storeServerPublishMessageAndSend(message).get();
                     clientPublishMessageStoreService.remove(message.getClientId(), message.getMessageId());
                 } catch (Exception e) {
                     log.error("Error sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",

@@ -5,7 +5,9 @@ import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.entity.IMqttSubscribeMessage;
 import com.zzy.mqtt.logic.entity.codes.MqttSubAckRC;
 import com.zzy.mqtt.logic.service.handler.MessageHandler;
-import com.zzy.mqtt.logic.service.store.*;
+import com.zzy.mqtt.logic.service.internal.CompositeStoreService;
+import com.zzy.mqtt.logic.service.store.RetainMessageStoreDTO;
+import com.zzy.mqtt.logic.service.store.SubscribeStoreDTO;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
@@ -15,16 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RequiredArgsConstructor
 @Slf4j
 public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscribeMessage> {
 
-    private final ISubscribeStoreService subscribeStoreService;
-
-    private final IRetainMessageStoreService retainMessageStoreService;
-
-    private final IMessageIdService messageIdService;
+    private final CompositeStoreService compositeStoreService;
 
 
     @SneakyThrows
@@ -34,7 +33,7 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Subscribe Message: " + event);
         log.debug("Handling MQTT Subscribe Message: {}", event);
-        MqttLogic.getExecutorService().submit(() -> this.handleSubscribe(event, transport));
+        MqttLogic.getProtocolService().submit(() -> this.handleSubscribe(event, transport));
 
     }
 
@@ -48,7 +47,7 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
                 String topicFilter = topicSubscription.topicName();
                 MqttQoS mqttQoS = topicSubscription.qualityOfService();
                 SubscribeStoreDTO subscribeStoreDTO = new SubscribeStoreDTO(clientId, topicFilter, mqttQoS.value());
-                subscribeStoreService.put(topicFilter, subscribeStoreDTO);
+                compositeStoreService.putSubscribeStore(topicFilter, subscribeStoreDTO);
                 mqttQoSList.add(mqttQoS);
                 log.debug("SUBSCRIBE - clientId: {}, topFilter: {}, QoS: {}", clientId, topicFilter, mqttQoS.value());
             });
@@ -86,12 +85,20 @@ public class MqttSubscribeMessageHandler implements MessageHandler<IMqttSubscrib
         return true;
     }
 
+    @SneakyThrows
     private void sendRetainMessage(ITransport transport, String topicFilter, MqttQoS mqttQoS) {
-        List<RetainMessageStoreDTO> retainMessageStoreDTOS = retainMessageStoreService.search(topicFilter);
+        List<RetainMessageStoreDTO> retainMessageStoreDTOS =
+                compositeStoreService.searchRetainStore(topicFilter).get();
         retainMessageStoreDTOS.forEach(retainMessageStoreDTO -> {
             MqttQoS respQoS = retainMessageStoreDTO.getMqttQoS() > mqttQoS.value() ? mqttQoS : MqttQoS.valueOf(retainMessageStoreDTO.getMqttQoS());
+            Integer messageId = null;
+            try {
+                messageId = compositeStoreService.getNextMessageId(transport.clientIdentifier()).get();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             transport.publish(retainMessageStoreDTO.getTopic(), retainMessageStoreDTO.getMessageBytes(),
-                    respQoS, false, true, messageIdService.getNextMessageId(transport.clientIdentifier())
+                    respQoS, false, true, messageId
             );
 
         });

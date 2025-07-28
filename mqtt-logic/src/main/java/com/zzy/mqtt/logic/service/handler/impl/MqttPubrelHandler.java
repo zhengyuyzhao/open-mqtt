@@ -2,7 +2,7 @@ package com.zzy.mqtt.logic.service.handler.impl;
 
 import com.zzy.mqtt.logic.MqttLogic;
 import com.zzy.mqtt.logic.service.handler.MessageHandler;
-import com.zzy.mqtt.logic.service.internal.CompositePublishService;
+import com.zzy.mqtt.logic.service.internal.CompositeStoreService;
 import com.zzy.mqtt.logic.service.transport.ITransport;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class MqttPubrelHandler implements MessageHandler<Integer> {
-    private final CompositePublishService compositePublishService;
+    private final CompositeStoreService compositeStoreService;
 
 
     @SneakyThrows
@@ -21,18 +21,19 @@ public class MqttPubrelHandler implements MessageHandler<Integer> {
         // This could involve processing the subscription, updating state, etc.
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
-        MqttLogic.getPublishProtocolService().submit(() -> {
+        MqttLogic.getProtocolService().submit(() -> {
             handleInner(messageId, transport);
         });
     }
 
+    @SneakyThrows
     private void handleInner(Integer event, ITransport transport) {
         log.debug("Handling MQTT Pubrel Message: {}", event);
         transport.publishComplete(event);
-        MqttLogic.getPublishReceiveService().submit(() -> {
-            compositePublishService.storeServerPublishMessageAndSendByClientPublishMessage(transport.clientIdentifier(), event);
 
-        });
+        compositeStoreService.storeServerPublishMessageAndSendByClientPublishMessage
+                (transport.clientIdentifier(), event).get();
+
     }
 
 
