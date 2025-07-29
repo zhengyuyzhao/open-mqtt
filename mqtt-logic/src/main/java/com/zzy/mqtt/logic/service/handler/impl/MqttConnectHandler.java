@@ -27,7 +27,7 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
     @Override
     public void handle(ITransport transport) {
 
-        MqttLogic.getProtocolService().execute(() ->
+        MqttLogic.getConnectService().execute(() ->
                 this.handleInner(transport)
         );
 
@@ -58,6 +58,9 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
         SessionStoreDTO sessionStoreDTO = compositeStoreService
                 .getSessionStore(transport.clientIdentifier()).get();
 
+        transport.accept(sessionStoreDTO != null);
+        transportLocalStoreService.putTransport(transport.clientIdentifier(), transport);
+
 
         if (transport.isCleanSession() || sessionStoreDTO == null) {
             sessionStoreDTO = SessionStoreDTO.builder()
@@ -71,9 +74,8 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
 //        sendDupMessage(transport);
 
         compositeStoreService.putClientStore(transport.clientIdentifier(), brokerId).get();
-        transportLocalStoreService.putTransport(transport.clientIdentifier(), transport);
 
-        transport.accept(sessionStoreDTO != null);
+
 
     }
 

@@ -21,9 +21,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 @Slf4j
 public class VertxClusterInternalMessageService implements IInternalMessageService {
@@ -35,6 +33,12 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
     private ObjectMapper objectMapper = new ObjectMapper();
 
     private ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
+
+    private ExecutorService storeService = new ThreadPoolExecutor(
+            10, 10, 100L, TimeUnit.SECONDS,
+            new java.util.concurrent.LinkedBlockingQueue<>(10000),
+            runnable -> new Thread(runnable, "VertxClusterInternalMessageService-StoreService")
+    );
     private final ITransportLocalStoreService transportLocalStoreService;
     private final IClientStoreService transportStoreService;
     private final ISubscribeStoreService subscribeStoreService;
@@ -149,11 +153,19 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
 
     }
 
+    @SneakyThrows
     private String getTransportBroker(String clientId) {
         if (transportBrokerCache.getIfPresent(clientId) != null) {
             return transportBrokerCache.getIfPresent(clientId);
         }
-        String broker = transportStoreService.getBroker(clientId);
+        String broker = storeService.submit(() -> {
+            try {
+                return transportStoreService.getBroker(clientId);
+            } catch (Exception e) {
+                return null;
+            }
+        }).get();
+
         if (StrUtil.isNotEmpty(broker)) {
             transportBrokerCache.put(clientId, broker);
         }

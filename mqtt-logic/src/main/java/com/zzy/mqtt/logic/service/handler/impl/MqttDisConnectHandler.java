@@ -23,7 +23,7 @@ public class MqttDisConnectHandler implements DisConnectHandler<ITransport> {
     public void handle(ITransport transport) {
         log.info("处理断开连接, clientId: {}, cleanSession: {}",
                 transport.clientIdentifier(), transport.isCleanSession());
-        MqttLogic.getProtocolService().submit(() -> {
+        MqttLogic.getConnectService().submit(() -> {
 
             try {
                 handleInner(transport);
