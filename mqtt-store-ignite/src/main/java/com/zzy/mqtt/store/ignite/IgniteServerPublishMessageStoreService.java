@@ -32,7 +32,7 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
         List<ServerPublishMessageStoreDTO> result = new ArrayList<>();
         ScanQuery<String, ServerPublishMessageStoreDTO> scanQuery = new ScanQuery<>();
         scanQuery.setFilter(filter);
-        scanQuery.setPageSize(100);
+        scanQuery.setPageSize(10);
         try (QueryCursor<Cache.Entry<String, ServerPublishMessageStoreDTO>> qryCursor
                      = store.query(new ScanQuery<>(filter))) {
             qryCursor.forEach(

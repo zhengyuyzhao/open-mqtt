@@ -51,7 +51,7 @@ public class IgniteClientPublishMessageStoreService implements IClientPublishMes
     public List<ClientPublishMessageStoreDTO> getAll() {
         List<ClientPublishMessageStoreDTO> result = new ArrayList<>();
         ScanQuery<String, ClientPublishMessageStoreDTO> scanQuery = new ScanQuery<>();
-        scanQuery.setPageSize(100);
+        scanQuery.setPageSize(10);
         scanQuery.setLocal(true);
         try (QueryCursor<Cache.Entry<String, ClientPublishMessageStoreDTO>> qryCursor
                      = store.query(scanQuery)) {

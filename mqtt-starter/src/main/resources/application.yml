@@ -11,3 +11,13 @@ logging:
   level:
     root: info
     org.apache.ignite: error
+management:
+  server:
+    port: 8082
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info, env, metrics
+  endpoint:
+    prometheus:
+      access: read_only

@@ -35,10 +35,10 @@ public class IgniteStoreConfig {
 //    IgniteCache<String, Integer> lockCache;
 
     @Resource(name = "subscribeCache")
-    IgniteCache<String, Map<String, SubscribeStoreDTO>> subscribeCache;
+    IgniteCache<String, SubscribeStoreDTO> subscribeCache;
 
     @Resource(name = "subscribeWildCardCache")
-    IgniteCache<String, Map<String, SubscribeStoreDTO>> subscribeWildCardCache;
+    IgniteCache<String, SubscribeStoreDTO> subscribeWildCardCache;
 
     @Resource(name = "transportCache")
     IgniteCache<String, String> transportCache;

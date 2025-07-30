@@ -76,6 +76,10 @@ public class VertxClusterInternalMessageService implements IInternalMessageServi
         init();
     }
 
+    public ExecutorService getStoreService() {
+        return storeService;
+    }
+
     @Override
     public void internalPublish(InternalMessageDTO internalMessageDTO) {
         log.debug("Publishing internal message: {}", internalMessageDTO);

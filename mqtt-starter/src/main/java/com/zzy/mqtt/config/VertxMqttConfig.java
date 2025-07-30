@@ -11,6 +11,7 @@ import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
 import com.zzy.mqtt.logic.service.transport.impl.DefaultTransportLocalStoreService;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.ignite.IgniteClusterManager;
 import jakarta.annotation.Resource;
@@ -59,18 +60,18 @@ public class VertxMqttConfig {
     }
 
     @Bean
-    public IInternalMessageService internalMessageService() {
+    public VertxClusterInternalMessageService internalMessageService(VertxCluster vertxCluster) {
         // Assuming you have a concrete implementation of IInternalMessageService
         return new VertxClusterInternalMessageService(brokerConfig.getBroker().getBrokerId(),
                 transportLocalStoreService(), clientStoreService, subscribeStoreService,
                 serverPublishMessageStoreService,
                 messageIdService,
-                vertxCluster()); // Replace with actual implementation if needed
+                vertxCluster); // Replace with actual implementation if needed
     }
 
 
     @Bean
-    public MqttLogic mqttLogic() {
+    public MqttLogic mqttLogic(VertxCluster vertxCluster) {
         return MqttLogic.builder()
                 .mqttLogicConfig(brokerConfig.getBroker())
                 .authService(new DefaultMqttAuth())
@@ -82,7 +83,7 @@ public class VertxMqttConfig {
                 .sessionStoreService(sessionStoreService)
                 .transportLocalStoreService(transportLocalStoreService())
                 .clientStoreService(clientStoreService)
-                .internalMessageService(internalMessageService()) // Replace with actual implementation if needed
+                .internalMessageService(internalMessageService(vertxCluster)) // Replace with actual implementation if needed
                 .build();
     }
 
@@ -96,13 +97,26 @@ public class VertxMqttConfig {
     }
 
     @Bean
-    public VertxCluster vertxCluster() {
-        return new VertxCluster(clusterManager());
+    public VertxCluster vertxCluster(MeterRegistry meterRegistry) {
+        return new VertxCluster(clusterManager(), meterRegistry);
     }
 
     @Bean
-    public MqttBroker mqttBroker() {
-        return new VertxMqttBroker(mqttLogic(), vertxCluster());
+    public MqttBroker mqttBroker(VertxCluster vertxCluster) {
+        return new VertxMqttBroker(mqttLogic(vertxCluster), vertxCluster);
+    }
+
+    @Bean
+    public ExecutorsMetrics executorsMetrics(MeterRegistry meterRegistry,
+                                             MqttLogic mqttLogic,
+                                             VertxClusterInternalMessageService internalMessageService) {
+        ExecutorsMetrics executorsMetrics = new ExecutorsMetrics(meterRegistry);
+        executorsMetrics.registerExecutor("ProtocolService", MqttLogic.getProtocolService());
+        executorsMetrics.registerExecutor("ConnectService", MqttLogic.getConnectService());
+        executorsMetrics.registerExecutor("StoreService", MqttLogic.getStoreService());
+        executorsMetrics.registerExecutor("internalMessageServiceStoreService", internalMessageService.getStoreService());
+
+        return executorsMetrics;
     }
 
 }

@@ -142,11 +142,11 @@ public class DupMessageRetryScheduleService {
 //                    return;
 //                }
 
-                SubscribeStoreDTO subscribeStoreDTO = subscribeStoreService.get(message.getTopic(), currentTransport.clientIdentifier());
-                if (subscribeStoreDTO == null || subscribeStoreDTO.getMqttQoS() == 0) {
-                    serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
-                    return;
-                }
+//                SubscribeStoreDTO subscribeStoreDTO = subscribeStoreService.get(message.getTopic(), currentTransport.clientIdentifier());
+//                if (subscribeStoreDTO == null || subscribeStoreDTO.getMqttQoS() == 0) {
+//                    serverPublishMessageStoreService.remove(transport.clientIdentifier(), message.getMessageId());
+//                    return;
+//                }
 
                 message.setCreateTime(System.currentTimeMillis());
                 message.setTimes(message.getTimes() + 1);
