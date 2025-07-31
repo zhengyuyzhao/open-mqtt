@@ -18,17 +18,9 @@ public class MqttLogic {
     private final MqttLogicConfig mqttLogicConfig;
 
     private final IAuthService authService;
-    private final IServerPublishMessageStoreService serverPublishMessageStoreService;
 
-    private final IClientPublishMessageStoreService clientPublishMessageStoreService;
-    private final IMessageIdService messageIdService;
-    private final IRetainMessageStoreService retainMessageStoreService;
-    private final ISubscribeStoreService subscribeStoreService;
-    private final ISessionStoreService sessionStoreService;
     private final ITransportLocalStoreService transportLocalStoreService;
-    private final IInternalMessageService internalMessageService;
 
-    private final IClientStoreService clientStoreService;
 
     private final CompositeStoreService compositeStoreService;
 
@@ -42,7 +34,8 @@ public class MqttLogic {
 
 
     @Builder
-    public MqttLogic(MqttLogicConfig mqttLogicConfig, IAuthService authService,
+    public MqttLogic(MqttLogicConfig mqttLogicConfig,
+                     IAuthService authService,
                      IServerPublishMessageStoreService serverPublishMessageStoreService,
                      IMessageIdService messageIdService,
                      IRetainMessageStoreService retainMessageStoreService,
@@ -54,15 +47,7 @@ public class MqttLogic {
                      IClientPublishMessageStoreService clientPublishMessageStoreService) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.authService = authService;
-        this.serverPublishMessageStoreService = serverPublishMessageStoreService;
-        this.messageIdService = messageIdService;
-        this.retainMessageStoreService = retainMessageStoreService;
-        this.subscribeStoreService = subscribeStoreService;
-        this.sessionStoreService = sessionStoreService;
         this.transportLocalStoreService = transportLocalStoreService;
-        this.internalMessageService = internalMessageService;
-        this.clientStoreService = clientStoreService;
-        this.clientPublishMessageStoreService = clientPublishMessageStoreService;
         this.compositeStoreService = new CompositeStoreService(
                 clientPublishMessageStoreService,
                 serverPublishMessageStoreService,
