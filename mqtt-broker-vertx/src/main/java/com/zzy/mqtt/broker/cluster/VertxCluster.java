@@ -27,7 +27,7 @@ public class VertxCluster {
                                 .setRegistryName("PrometheusMeterRegistry")
                                 .setEnabled(true)
                 )
-                .setEventLoopPoolSize(10) // Adjust based on your needs
+                .setEventLoopPoolSize(20) // Adjust based on your needs
                 .setWorkerPoolSize(20) // Adjust based on your needs
                 .setMaxEventLoopExecuteTime(2000000L); // Set max event loop execute time in nanoseconds
 
