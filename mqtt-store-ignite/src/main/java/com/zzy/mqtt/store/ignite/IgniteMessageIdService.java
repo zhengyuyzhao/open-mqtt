@@ -3,8 +3,7 @@ package com.zzy.mqtt.store.ignite;
 import com.zzy.mqtt.logic.service.store.IMessageIdService;
 import lombok.RequiredArgsConstructor;
 import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteAtomicLong;
-import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteAtomicSequence;
 
 @RequiredArgsConstructor
 public class IgniteMessageIdService implements IMessageIdService {
@@ -12,7 +11,7 @@ public class IgniteMessageIdService implements IMessageIdService {
 
     @Override
     public int getNextMessageId(String clientId) {
-        IgniteAtomicLong count = ignite.atomicLong(clientId, 1, true);
+        IgniteAtomicSequence count = ignite.atomicSequence(clientId, 1, true);
         return (int) ((count.incrementAndGet() % 65530 + 65530) % 65530) + 1;
     }
 
