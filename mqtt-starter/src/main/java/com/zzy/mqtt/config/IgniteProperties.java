@@ -62,7 +62,7 @@ public class IgniteProperties {
 
 	private int publishTps = 5000;
 
-	private int backup = 2;
+	private int backup = 1;
 
 
 }

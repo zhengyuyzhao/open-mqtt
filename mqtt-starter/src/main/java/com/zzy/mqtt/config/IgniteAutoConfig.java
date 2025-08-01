@@ -33,6 +33,7 @@ import javax.cache.expiry.Duration;
 import java.util.Arrays;
 
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
+import static org.apache.ignite.cache.CacheWriteSynchronizationMode.PRIMARY_SYNC;
 
 /**
  * 自动配置apache ignite
@@ -113,9 +114,9 @@ public class IgniteAutoConfig {
                 .setDataRegionConfigurations(persistence)
                 .setWalSegmentSize(1024 * 1024 * 1024)
                 .setMetricsEnabled(true)
-                .setWriteThrottlingEnabled(true)
+                .setWriteThrottlingEnabled(false)
                 .setCdcWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/cdc" : null)
-                .setWalArchivePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/wal" : null)
+                .setWalArchivePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/wal/arch" : null)
                 .setWalPath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() + "/wal" : null)
                 .setStoragePath(StrUtil.isNotBlank(igniteProperties.getPersistenceStorePath()) ? igniteProperties.getPersistenceStorePath() : null);
 
@@ -196,11 +197,14 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(igniteProperties.getBackup())
-                .setReadFromBackup(false)
+                .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
                 .setStatisticsEnabled(true)
+                .setOnheapCacheEnabled(true)
+                .setCopyOnRead(false)
+                .setWriteSynchronizationMode(PRIMARY_SYNC)
                 .setName("sessionCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -226,11 +230,14 @@ public class IgniteAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setDataRegionName(PERSISTENCE_DATA_REGION)
                 .setBackups(igniteProperties.getBackup())
-                .setReadFromBackup(false)
+                .setReadFromBackup(true)
                 .setCacheMode(CacheMode.PARTITIONED)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setAtomicityMode(CacheAtomicityMode.ATOMIC)
                 .setStatisticsEnabled(true)
+                .setOnheapCacheEnabled(true)
+                .setCopyOnRead(false)
+                .setWriteSynchronizationMode(PRIMARY_SYNC)
                 .setName("serverPublishMessageCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }

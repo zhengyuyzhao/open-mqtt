@@ -10,6 +10,9 @@ public class IgniteClientStoreService implements IClientStoreService {
 
     @Override
     public String getBroker(String clientId) {
+        if (!store.containsKey(clientId)) {
+            return null;
+        }
         return store.get(clientId);
     }
 

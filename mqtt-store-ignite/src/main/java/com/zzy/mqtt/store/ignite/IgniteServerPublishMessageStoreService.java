@@ -2,9 +2,7 @@ package com.zzy.mqtt.store.ignite;
 
 import com.zzy.mqtt.logic.service.store.IServerPublishMessageStoreService;
 import com.zzy.mqtt.logic.service.store.ServerPublishMessageStoreDTO;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
-import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.cache.query.QueryCursor;
 import org.apache.ignite.cache.query.ScanQuery;
@@ -34,7 +32,7 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
         scanQuery.setFilter(filter);
         scanQuery.setPageSize(10);
         try (QueryCursor<Cache.Entry<String, ServerPublishMessageStoreDTO>> qryCursor
-                     = store.query(new ScanQuery<>(filter))) {
+                     = store.query(scanQuery)) {
             qryCursor.forEach(
                     entry -> result.add(entry.getValue()));
         }
@@ -48,7 +46,8 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
 
     @Override
     public void remove(String clientId, int messageId) {
-        store.remove(clientId + INFIX + messageId);
+        store.put(clientId + INFIX + messageId, null);
+//        store.remove(clientId + INFIX + messageId);
 
     }
 
@@ -58,7 +57,8 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
         try (QueryCursor<Cache.Entry<String, ServerPublishMessageStoreDTO>> qryCursor
                      = store.query(new ScanQuery<>(filter))) {
             qryCursor.forEach(
-                    entry -> store.remove(entry.getKey()));
+//                    entry -> store.remove(entry.getKey()));
+                    entry -> store.put(entry.getKey(), null));
         }
     }
 }
