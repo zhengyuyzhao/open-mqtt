@@ -27,6 +27,9 @@ public class IgniteSessionStoreService implements ISessionStoreService {
 
     @Override
     public SessionStoreDTO get(String clientId) {
+        if (!store.containsKey(clientId)) {
+            return null;
+        }
         return store.get(clientId);
     }
 
