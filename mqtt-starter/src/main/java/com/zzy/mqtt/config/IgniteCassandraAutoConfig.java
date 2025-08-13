@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
@@ -164,9 +165,11 @@ public class IgniteCassandraAutoConfig {
         ClassPathResource classPathResource = new ClassPathResource(fileName);
 //        ClassPathResource classPathResource = new ClassPathResource("persisence/clientPublishMessage.xml");
         KeyValuePersistenceSettings settings = null;
-        try {
-            settings = new KeyValuePersistenceSettings(classPathResource.getFile());
+        try (InputStream inputStream = classPathResource.getInputStream()) {
+            String content = new String(inputStream.readAllBytes());
+            settings = new KeyValuePersistenceSettings(content);
         } catch (IOException e) {
+            log.error("Error loading persistence settings from classpath resource: {}", fileName, e);
             throw new RuntimeException(e);
         }
         return settings;
