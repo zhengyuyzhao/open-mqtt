@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.Future;
+
 @Slf4j
 @RequiredArgsConstructor
 public class MqttPublishCompHandler implements MessageHandler<IMqttPubCompMessage> {
@@ -23,19 +25,27 @@ public class MqttPublishCompHandler implements MessageHandler<IMqttPubCompMessag
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
         MqttLogic.getProtocolService().submit(() -> {
-            handleInner(event, transport);
+            try {
+                // Call the inner handling logic
+                handleInner(event, transport);
+            } catch (Exception e) {
+                log.error("Error handling MQTT PubComp Message: {}", event, e);
+                // Handle the exception appropriately, maybe send an error response or log it
+            }
+//            handleInner(event, transport);
         });
 
     }
 
+
     @SneakyThrows
     private void handleInner(IMqttPubCompMessage event, ITransport transport) {
         log.debug("Handling MQTT PubComp Message: {}", event.messageId());
-        compositeStoreService.removeServerPublishStore(
+        Future<Void> res = compositeStoreService.removeServerPublishStore(
                 transport.clientIdentifier(),
                 event.messageId()
-        ).get();
-
+        );
+        res.get();
     }
 
 

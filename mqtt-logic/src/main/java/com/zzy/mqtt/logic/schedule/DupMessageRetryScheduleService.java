@@ -114,6 +114,7 @@ public class DupMessageRetryScheduleService {
         log.debug("Retrying duplicate publish messages for transport: {}, messages: {}", transport.clientIdentifier(), messages);
         if (messages != null && !messages.isEmpty()) {
             messages.forEach(message -> {
+                log.debug("Checking message: {}, createTime: {}, times: {}", message.getMessageId(), message.getCreateTime(), message.getTimes());
                 if (serverPublishMessageStoreService.get(transport.clientIdentifier(), message.getMessageId()) == null) {
                     return;
                 }

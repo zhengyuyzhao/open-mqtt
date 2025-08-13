@@ -20,7 +20,14 @@ public class MqttPubrecHandler implements MessageHandler<Integer> {
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
         MqttLogic.getProtocolService().submit(() -> {
-            handleInner(messageId, transport);
+            try {
+                // Call the inner handling logic
+                handleInner(messageId, transport);
+            } catch (Exception e) {
+                log.error("Error handling MQTT Pubrec Message: {}", messageId, e);
+                // Handle the exception appropriately, maybe send an error response or log it
+            }
+//            handleInner(messageId, transport);
         });
     }
 

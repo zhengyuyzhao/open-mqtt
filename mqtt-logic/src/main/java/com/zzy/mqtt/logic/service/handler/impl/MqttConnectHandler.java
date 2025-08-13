@@ -28,7 +28,18 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
     public void handle(ITransport transport) {
 
         MqttLogic.getConnectService().execute(() ->
-                this.handleInner(transport)
+                {
+                    try{
+                        // Call the inner handling logic
+                        handleInner(transport);
+                    } catch (Exception e) {
+                        log.error("Error handling MQTT Connect: {}", transport.clientIdentifier(), e);
+                        // Handle the exception appropriately, maybe send an error response or log it
+                        transport.reject(transport.protocolVersion() < 5 ? MqttConnectReturnCode.CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION
+                                : MqttConnectReturnCode.CONNECTION_REFUSED_UNSPECIFIED_ERROR);
+                    }
+//                    this.handleInner(transport)
+                }
         );
 
     }
@@ -74,7 +85,6 @@ public class MqttConnectHandler implements ConnectHandler<ITransport> {
 //        sendDupMessage(transport);
 
         compositeStoreService.putClientStore(transport.clientIdentifier(), brokerId).get();
-
 
 
     }

@@ -11,6 +11,7 @@ logging:
   level:
     root: info
     org.apache.ignite: error
+    com.datastax.driver: info
 
 management:
   server:

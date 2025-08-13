@@ -4,7 +4,9 @@
 
 package com.zzy.mqtt.logic.service.store;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -12,9 +14,10 @@ import java.io.Serializable;
  * Retain标志消息存储
  */
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RetainMessageStoreDTO implements Serializable {
 
-	private static final long serialVersionUID = -7548204047370972779L;
 
 	private String topic;
 

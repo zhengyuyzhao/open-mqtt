@@ -1,0 +1,41 @@
+<!--
+Root container for persistence settings configuration.
+
+Note: required element
+
+Attributes:
+  1) keyspace [required] - specifies keyspace for Cassandra tables which should be used to store key/value pairs
+  2) table    [required] - specifies Cassandra table which should be used to store key/value pairs
+  3) ttl      [optional] - specifies expiration period for the table rows (in seconds)
+-->
+<persistence keyspace="my_keyspace" table="subscribe_store_wild_card" ttl="86400">
+    <!--
+    Specifies Cassandra keyspace options which should be used to create provided keyspace if it doesn't exist.
+
+    Note: optional element
+    -->
+    <keyspaceOptions>
+        REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 3}
+        AND DURABLE_WRITES = true
+    </keyspaceOptions>
+
+    <!--
+    Specifies Cassandra table options which should be used to create provided table if it doesn't exist.
+
+    Note: optional element
+    -->
+    <tableOptions>
+        comment = 'A most excellent and useful table'
+<!--        AND read_repair_chance = 0.2-->
+    </tableOptions>
+
+    <keyPersistence class="java.lang.String" strategy="PRIMITIVE" />
+<!--    <valuePersistence strategy="BLOB"/>-->
+    <valuePersistence class="com.zzy.mqtt.logic.service.store.SubscribeStoreDTO"
+                      strategy="POJO">
+        <!-- Mapping from POJO field to Cassandra table column -->
+        <field name="clientId"  index="true"/>
+        <field name="topicFilter"/>
+        <field name="mqttQoS" />
+    </valuePersistence>
+</persistence>

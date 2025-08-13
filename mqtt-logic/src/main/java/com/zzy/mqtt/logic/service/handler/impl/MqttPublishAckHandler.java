@@ -23,7 +23,14 @@ public class MqttPublishAckHandler implements MessageHandler<IMqttPubAckMessage>
 //        System.out.println("Handling MQTT Publish Message: " + event);
 
         MqttLogic.getProtocolService().submit(() -> {
-            handleInner(event, transport);
+            try {
+                // Call the inner handling logic
+                handleInner(event, transport);
+            } catch (Exception e) {
+                log.error("Error handling MQTT PubAck Message: {}", event, e);
+                // Handle the exception appropriately, maybe send an error response or log it
+            }
+//            handleInner(event, transport);
         });
     }
 

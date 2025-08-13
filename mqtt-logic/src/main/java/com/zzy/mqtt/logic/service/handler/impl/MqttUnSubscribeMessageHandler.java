@@ -22,7 +22,14 @@ public class MqttUnSubscribeMessageHandler implements MessageHandler<IMqttUnsubs
         // Handle the MQTT subscribe message here
         // This could involve processing the subscription, updating state, etc.
         MqttLogic.getProtocolService().submit(() -> {
-            handleInner(event, transport);
+            try {
+                // Call the inner handling logic
+                handleInner(event, transport);
+            } catch (Exception e) {
+                log.error("Error handling MQTT Unsubscribe Message: {}", event, e);
+                // Handle the exception appropriately, maybe send an error response or log it
+            }
+//            handleInner(event, transport);
         });
     }
 

@@ -46,7 +46,7 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
 
     @Override
     public void remove(String clientId, int messageId) {
-        store.put(clientId + INFIX + messageId, null);
+        store.remove(clientId + INFIX + messageId);
 //        store.remove(clientId + INFIX + messageId);
 
     }
@@ -58,7 +58,7 @@ public class IgniteServerPublishMessageStoreService implements IServerPublishMes
                      = store.query(new ScanQuery<>(filter))) {
             qryCursor.forEach(
 //                    entry -> store.remove(entry.getKey()));
-                    entry -> store.put(entry.getKey(), null));
+                    entry -> store.remove(entry.getKey(), null));
         }
     }
 }

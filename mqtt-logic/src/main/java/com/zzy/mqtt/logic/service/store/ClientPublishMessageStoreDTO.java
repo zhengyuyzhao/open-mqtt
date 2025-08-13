@@ -4,9 +4,7 @@
 
 package com.zzy.mqtt.logic.service.store;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 import java.io.Serializable;
 
@@ -16,9 +14,10 @@ import java.io.Serializable;
 @Builder
 @Data
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ClientPublishMessageStoreDTO implements Serializable {
 
-	private static final long serialVersionUID = -8112511377194421600L;
 
 	private String clientId;
 
