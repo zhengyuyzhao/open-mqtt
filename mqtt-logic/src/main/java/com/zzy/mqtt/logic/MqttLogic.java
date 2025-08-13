@@ -70,14 +70,15 @@ public class MqttLogic {
 
         connectService = Executors.newVirtualThreadPerTaskExecutor();
         protocolService = Executors.newVirtualThreadPerTaskExecutor();
-        storeService = new ThreadPoolExecutor(
-                10,
-                100,
-                20,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(10000),
-                new ThreadPoolExecutor.AbortPolicy()
-        );
+        storeService = Executors.newVirtualThreadPerTaskExecutor();
+//        storeService = new ThreadPoolExecutor(
+//                10,
+//                100,
+//                20,
+//                TimeUnit.SECONDS,
+//                new LinkedBlockingQueue<>(10000),
+//                new ThreadPoolExecutor.AbortPolicy()
+//        );
 
     }
 

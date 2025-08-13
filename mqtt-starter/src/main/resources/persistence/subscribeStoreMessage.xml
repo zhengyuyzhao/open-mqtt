@@ -8,7 +8,7 @@ Attributes:
   2) table    [required] - specifies Cassandra table which should be used to store key/value pairs
   3) ttl      [optional] - specifies expiration period for the table rows (in seconds)
 -->
-<persistence keyspace="my_keyspace" table="subscribe_store" ttl="86400">
+<persistence keyspace="my_keyspace" table="subscribe_store" ttl="0">
     <!--
     Specifies Cassandra keyspace options which should be used to create provided keyspace if it doesn't exist.
 

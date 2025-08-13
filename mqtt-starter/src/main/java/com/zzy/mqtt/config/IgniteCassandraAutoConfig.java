@@ -5,6 +5,7 @@
 package com.zzy.mqtt.config;
 
 import cn.hutool.core.util.StrUtil;
+import com.datastax.driver.core.PoolingOptions;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ignite.Ignite;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+import static com.datastax.driver.core.HostDistance.REMOTE;
 import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 
 /**
@@ -158,6 +160,10 @@ public class IgniteCassandraAutoConfig {
         dataSource.setPort(9042);
         dataSource.setContactPoints("10.148.12.163");
         dataSource.setProtocolVersion(4);
+        PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions.setConnectionsPerHost(REMOTE,20, 50);
+        poolingOptions.setMaxRequestsPerConnection(REMOTE, 1000);
+        dataSource.setPoolingOptions(poolingOptions);
 //        dataSource.setCompression("lz4");
         return dataSource;
     }
@@ -190,6 +196,7 @@ public class IgniteCassandraAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setReadThrough(true)
                 .setWriteThrough(true)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/retainMessage.xml"))
                 .setStatisticsEnabled(true)
                 .setName("retainMessageCache");
@@ -204,6 +211,7 @@ public class IgniteCassandraAutoConfig {
                 .setWriteThrough(true)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/subscribeStoreMessage.xml"))
                 .setStatisticsEnabled(true)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setName("subscribeCache");
         return ignite().getOrCreateCache(cacheConfiguration);
     }
@@ -213,6 +221,7 @@ public class IgniteCassandraAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setReadThrough(true)
                 .setWriteThrough(true)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/subscribeStoreWildCardMessage.xml"))
                 .setStatisticsEnabled(true)
                 .setName("subscribeWildCardCache");
@@ -224,6 +233,7 @@ public class IgniteCassandraAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setReadThrough(true)
                 .setWriteThrough(true)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/sessionStoreMessage.xml"))
                 .setStatisticsEnabled(true)
                 .setName("sessionCache");
@@ -250,6 +260,7 @@ public class IgniteCassandraAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setReadThrough(true)
                 .setWriteThrough(true)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/serverPublishMessage.xml"))
                 .setStatisticsEnabled(true)
                 .setName("serverPublishMessageCache");
@@ -261,6 +272,7 @@ public class IgniteCassandraAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setReadThrough(true)
                 .setWriteThrough(true)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/clientPublishMessage.xml"))
                 .setStatisticsEnabled(true)
                 .setName("clientPublishMessageCache");
@@ -272,6 +284,7 @@ public class IgniteCassandraAutoConfig {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
                 .setReadThrough(true)
                 .setWriteThrough(true)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/clientStore.xml"))
                 .setStatisticsEnabled(true)
                 .setName("transportCache");
