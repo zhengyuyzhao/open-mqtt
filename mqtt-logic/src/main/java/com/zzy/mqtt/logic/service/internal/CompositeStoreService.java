@@ -206,6 +206,10 @@ public class CompositeStoreService {
 //    }
 
     public Future<Void> storeServerPublishMessageAndSend(ClientPublishMessageStoreDTO event) {
+        return storeServerPublishMessageAndSend(event, false);
+    }
+
+    public Future<Void> storeServerPublishMessageAndSend(ClientPublishMessageStoreDTO event, boolean dup) {
 
 
         return wrapSemaphoreTask(() -> {
@@ -220,7 +224,7 @@ public class CompositeStoreService {
                         .messageId(messageIdService.getNextMessageId(subscribeStoreDTO.getClientId()))
                         .toClientId(subscribeStoreDTO.getClientId())
                         .mqttQoS(subscribeStoreDTO.getMqttQoS())
-                        .dup(false)
+                        .dup(dup)
                         .build();
                 if (subscribeStoreDTO.getMqttQoS() > 0) {
                     ServerPublishMessageStoreDTO serverPublishMessageStoreDTO = ServerPublishMessageStoreDTO.builder()

@@ -31,8 +31,8 @@ public class IgniteStoreConfig {
     @Resource(name = "sessionCache")
     IgniteCache<String, SessionStoreDTO> sessionCache;
 
-//    @Resource(name = "lockCache")
-//    IgniteCache<String, Integer> lockCache;
+    @Resource(name = "lockCache")
+    IgniteCache<String, Integer> lockCache;
 
     @Resource(name = "subscribeCache")
     IgniteCache<String, SubscribeStoreDTO> subscribeCache;
@@ -101,13 +101,13 @@ public class IgniteStoreConfig {
         );
     }
 
-//    @Bean
-//    public IgniteLockService igniteLockService() {
-//        // Assuming you have a concrete implementation of IDistributeLock
-//        return new IgniteLockService(
-//                lockCache
-//        );
-//    }
+    @Bean
+    public IgniteLockService igniteLockService() {
+        // Assuming you have a concrete implementation of IDistributeLock
+        return new IgniteLockService(
+                lockCache
+        );
+    }
 
 
 }

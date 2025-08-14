@@ -33,6 +33,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
+import javax.cache.expiry.AccessedExpiryPolicy;
+import javax.cache.expiry.Duration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -48,7 +50,6 @@ import static org.apache.ignite.cache.CacheWriteSynchronizationMode.FULL_SYNC;
 @EnableConfigurationProperties({IgniteProperties.class, BrokerConfig.class})
 @SuppressWarnings("unchecked")
 public class IgniteCassandraAutoConfig {
-
     @Resource
     private BrokerConfig brokerConfig;
 
@@ -194,6 +195,7 @@ public class IgniteCassandraAutoConfig {
     @Bean
     public IgniteCache retainMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
                 .setBackups(1)
@@ -208,6 +210,7 @@ public class IgniteCassandraAutoConfig {
     @Bean
     public IgniteCache subscribeCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
                 .setBackups(1)
@@ -221,6 +224,7 @@ public class IgniteCassandraAutoConfig {
     @Bean
     public IgniteCache subscribeWildCardCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
                 .setBackups(1)
@@ -234,6 +238,7 @@ public class IgniteCassandraAutoConfig {
     @Bean
     public IgniteCache sessionCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
                 .setBackups(1)
@@ -244,24 +249,25 @@ public class IgniteCassandraAutoConfig {
         return ignite().getOrCreateCache(cacheConfiguration);
     }
 
-//    @Bean
-//    public IgniteCache lockCache() throws Exception {
-//        CacheConfiguration cacheConfiguration = new CacheConfiguration()
-//                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
-//                .setDataRegionName(PERSISTENCE_DATA_REGION)
-//                .setBackups(igniteProperties.getBackup())
-//                .setReadFromBackup(false)
-//                .setCacheMode(CacheMode.PARTITIONED)
-//                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
-//                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
-//                .setStatisticsEnabled(true)
-//                .setName("lockCache");
-//        return ignite().getOrCreateCache(cacheConfiguration);
-//    }
+    @Bean
+    public IgniteCache lockCache() throws Exception {
+        CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
+                .setReadThrough(true)
+                .setWriteThrough(true)
+                .setBackups(1)
+                .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
+                .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
+                .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/lockStore.xml"))
+                .setStatisticsEnabled(true)
+                .setName("lockCache");
+        return ignite().getOrCreateCache(cacheConfiguration);
+    }
 
     @Bean
     public IgniteCache serverPublishMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
                 .setBackups(1)
@@ -275,6 +281,7 @@ public class IgniteCassandraAutoConfig {
     @Bean
     public IgniteCache clientPublishMessageCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
                 .setBackups(1)
@@ -288,6 +295,7 @@ public class IgniteCassandraAutoConfig {
     @Bean
     public IgniteCache transportCache() throws Exception {
         CacheConfiguration cacheConfiguration = new CacheConfiguration()
+                .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
                 .setBackups(1)

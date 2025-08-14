@@ -39,8 +39,11 @@ public class IgniteClientPublishMessageStoreService implements IClientPublishMes
     public List<ClientPublishMessageStoreDTO> get(String clientId) {
         IgniteBiPredicate<String, ClientPublishMessageStoreDTO> filter = (key, p) -> clientId.equals(p.getClientId());
         List<ClientPublishMessageStoreDTO> result = new ArrayList<>();
+        ScanQuery<String, ClientPublishMessageStoreDTO> scanQuery = new ScanQuery<>();
+        scanQuery.setPageSize(10);
+        scanQuery.setFilter(filter);
         try (QueryCursor<Cache.Entry<String, ClientPublishMessageStoreDTO>> qryCursor
-                     = store.query(new ScanQuery<>(filter))) {
+                     = store.query(scanQuery)) {
             qryCursor.forEach(
                     entry -> result.add(entry.getValue()));
         }

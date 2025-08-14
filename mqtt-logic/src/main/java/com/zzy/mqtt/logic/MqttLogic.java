@@ -7,6 +7,7 @@ import com.zzy.mqtt.logic.service.auth.IAuthService;
 import com.zzy.mqtt.logic.service.handler.impl.*;
 import com.zzy.mqtt.logic.service.internal.CompositeStoreService;
 import com.zzy.mqtt.logic.service.internal.IInternalMessageService;
+import com.zzy.mqtt.logic.service.lock.IDistributeLock;
 import com.zzy.mqtt.logic.service.store.*;
 import com.zzy.mqtt.logic.service.transport.IClientStoreService;
 import com.zzy.mqtt.logic.service.transport.ITransportLocalStoreService;
@@ -44,7 +45,8 @@ public class MqttLogic {
                      ITransportLocalStoreService transportLocalStoreService,
                      IInternalMessageService internalMessageService,
                      IClientStoreService clientStoreService,
-                     IClientPublishMessageStoreService clientPublishMessageStoreService) {
+                     IClientPublishMessageStoreService clientPublishMessageStoreService,
+                     IDistributeLock distributeLock) {
         this.mqttLogicConfig = mqttLogicConfig;
         this.authService = authService;
         this.transportLocalStoreService = transportLocalStoreService;
@@ -65,7 +67,9 @@ public class MqttLogic {
                 clientPublishMessageStoreService,
                 compositeStoreService,
                 transportLocalStoreService,
-                subscribeStoreService
+                subscribeStoreService,
+                distributeLock
+
         );
 
         connectService = Executors.newVirtualThreadPerTaskExecutor();
