@@ -36,7 +36,7 @@ public class DupMessageRetryScheduleService {
     private final ScheduledExecutorService clientMessagescheduledExecutorService;
 
 
-    private final long resendDelay = 15000; // 重发延迟时间，单位毫秒
+    private final long resendDelay = 60000; // 重发延迟时间，单位毫秒
     private final int resendTimes = 3; // 重发次数
 
     public DupMessageRetryScheduleService(MqttLogicConfig mqttLogicConfig,
@@ -183,7 +183,7 @@ public class DupMessageRetryScheduleService {
                 log.debug("Sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
                         message.getMessageId(), message.getTopic(), message.getMqttQoS(), message.getMessageId());
                 try {
-                    compositeStoreService.storeServerPublishMessageAndSend(message).get();
+                    compositeStoreService.storeServerPublishMessageAndSend(message, true).get();
                     clientPublishMessageStoreService.remove(message.getClientId(), message.getMessageId());
                 } catch (Exception e) {
                     log.error("Error sending duplicate client message: {}, topic: {}, qos: {}, messageId: {}",
