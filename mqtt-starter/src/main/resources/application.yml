@@ -7,6 +7,11 @@ spring:
         backup: 1
         static-ip-addresses: 127.0.0.1:47500..47509
         persistenceStorePath: /data/ignite/store
+        casandraConfig:
+          contactPoints: 10.148.12.163
+          port: 9042
+          username: root
+          password: public
 logging:
   level:
     root: info

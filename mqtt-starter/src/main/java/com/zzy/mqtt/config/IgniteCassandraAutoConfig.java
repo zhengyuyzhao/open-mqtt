@@ -156,13 +156,13 @@ public class IgniteCassandraAutoConfig {
     @Bean
     public DataSource dataSource() {
         DataSource dataSource = new DataSource();
-        dataSource.setUser("root");
-        dataSource.setPassword("public");
-        dataSource.setPort(9042);
-        dataSource.setContactPoints("10.148.12.163");
+        dataSource.setUser(igniteProperties.getCasandraConfig().getUsername());
+        dataSource.setPassword(igniteProperties.getCasandraConfig().getPassword());
+        dataSource.setPort(igniteProperties.getCasandraConfig().getPort());
+        dataSource.setContactPoints(igniteProperties.getCasandraConfig().getContactPoints());
         dataSource.setProtocolVersion(4);
         PoolingOptions poolingOptions = new PoolingOptions();
-        poolingOptions.setConnectionsPerHost(REMOTE,20, 50);
+        poolingOptions.setConnectionsPerHost(REMOTE,20, igniteProperties.getCasandraConfig().getConnectionMax());
         poolingOptions.setMaxRequestsPerConnection(REMOTE, 1000);
         dataSource.setPoolingOptions(poolingOptions);
 //        dataSource.setCompression("lz4");
@@ -198,7 +198,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/retainMessage.xml"))
                 .setStatisticsEnabled(true)
@@ -213,7 +214,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/subscribeStoreMessage.xml"))
                 .setStatisticsEnabled(true)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
@@ -227,7 +229,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/subscribeStoreWildCardMessage.xml"))
                 .setStatisticsEnabled(true)
@@ -241,7 +244,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/sessionStoreMessage.xml"))
                 .setStatisticsEnabled(true)
@@ -255,7 +259,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setAtomicityMode(CacheAtomicityMode.TRANSACTIONAL)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/lockStore.xml"))
@@ -270,7 +275,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/serverPublishMessage.xml"))
                 .setStatisticsEnabled(true)
@@ -284,7 +290,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/clientPublishMessage.xml"))
                 .setStatisticsEnabled(true)
@@ -298,7 +305,8 @@ public class IgniteCassandraAutoConfig {
                 .setExpiryPolicyFactory(AccessedExpiryPolicy.factoryOf(Duration.ONE_DAY))
                 .setReadThrough(true)
                 .setWriteThrough(true)
-                .setBackups(1)
+                .setBackups(0)
+                .setDataRegionName(NOT_PERSISTENCE_DATA_REGION)
                 .setPartitionLossPolicy(PartitionLossPolicy.IGNORE)
                 .setCacheStoreFactory(cassandraCacheStoreFactory("persistence/clientStore.xml"))
                 .setStatisticsEnabled(true)

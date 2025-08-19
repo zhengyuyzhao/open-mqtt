@@ -64,5 +64,7 @@ public class IgniteProperties {
 
 	private int backup = 1;
 
+	private CasandraConfig casandraConfig;
+
 
 }
