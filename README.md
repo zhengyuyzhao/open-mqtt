@@ -5,3 +5,5 @@ open-mqtt是一款基于Java开发的轻量级高并发MQTT Broker，采用Netty
 采用ignite 实现集群功能，支持水平扩展和高可用部署
 ### 存储
 支持 casandra, ignite 等多种存储方案
+### 集群通信
+采用Vertx eventbus 实现集群节点间通信
